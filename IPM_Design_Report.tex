@@ -315,8 +315,8 @@ The procedure consists of five stages, each corresponding to a section of the pa
     \item \textbf{Rotor geometry} (Section IV, eqs. 8--18): bridges, magnet width/thickness, V-angle and pole-shoe dimensions from the stator bore and pole pitch.
     \item \textbf{No-load saturation model} (Section II and III, eqs. 3--7, 38--42): air-gap flux, Carter factor and bridge leakage, giving the no-load flux density $B_{g,1o}$.
     \item \textbf{Torque sizing and reaction coefficients} (Section V, eqs. 57--64, 96--110): the alignment/reluctance torque split, its geometric reaction coefficients (Section \ref{sec:torque_sizing_reaction_coefficients}), and the optimal current phase advance (Section \ref{sec:saturation_phase_advance}).
-    \item \textbf{Stator winding and core sizing} (Section VI, eqs. 65--94): slot count, conductor count/gauge, tooth/yoke dimensions from the corner-point EMF and current density.
-    \item \textbf{Electrical parameters} (Section VII, eqs. 95--120): $L_d$, $L_q$, $\Psi_{PM}$.
+    \item \textbf{Stator winding and core sizing} (Section VI, eqs. 65--94): slot count, conductor count/gauge, tooth/yoke dimensions from the corner-point EMF and current density (Section \ref{sec:stator_winding_sizing}).
+    \item \textbf{Electrical parameters} (Section VII, eqs. 95--120): $L_d$, $L_q$, $\Psi_{PM}$ (Section \ref{sec:electrical_parameters}).
 \end{enumerate}
 Since geometry feeds saturation, saturation feeds torque sizing, and torque sizing feeds stator sizing, \texttt{IPMRotorSizer.solve()} iterates all five stages to convergence rather than solving once through.
 
@@ -420,7 +420,7 @@ At the converged design point (\texttt{rotorSizer.summary()}, eqs. 19--22), this
 
 \subsubsection*{Stage 3: Torque Sizing and Reaction Coefficients}
 \label{sec:torque_sizing_reaction_coefficients}
-Eq.~\ref{eq:ricca_torque_pu}'s anisotropy term carries two purely geometric factors, $c_d$ and $\sigma_{an}=\sigma_{an,o}=c_q/c_d$, that this stage supplies (paper Section VII, eqs. 95--110; \texttt{IPMRotorSizer.computeElectricalParameters\_}). Physically, $c_d$ and $c_q$ are each the ratio of the actual fundamental reaction-field flux density -- shaped by the pole shoe and blocked by the bridges (fully saturated by the PM leakage flux, hence treated as air) -- to the flux density an idealized \emph{isotropic} rotor of the same air gap would produce for the same reaction MMF:
+Eq.~\ref{eq:ricca_torque_pu}'s anisotropy term carries two purely geometric factors, $c_d$ and $\sigma_{an}=\sigma_{an,o}=c_q/c_d$, that this stage supplies (paper Section VII, eqs. 95--110; \texttt{IPMRotorSizer.\allowbreak computeElectricalParameters\_}). Physically, $c_d$ and $c_q$ are each the ratio of the actual fundamental reaction-field flux density -- shaped by the pole shoe and blocked by the bridges (fully saturated by the PM leakage flux, hence treated as air) -- to the flux density an idealized \emph{isotropic} rotor of the same air gap would produce for the same reaction MMF:
 \begin{equation}
 \label{eq:bdis_bqis}
 B_{d,is} = \frac{\mu_0 M_d}{k_C g}, \qquad B_{q,is} = \frac{\mu_0 M_q}{k_C g}
@@ -511,6 +511,51 @@ The same converged design point also fixes the phase current the rest of Part A 
     I_q = \frac{T_{nom}}{1.5\cdot(P/2)\cdot\Psi_{PM1}} = \frac{9.8}{1.5\times5\times0.0176} \approx 74.2\,\text{A}, \qquad I_{pk}=\sqrt{I_d^2+I_q^2}=I_q\approx74.2\,\text{A}
 \end{equation}
 This $I_{pk}=74.2\,\text{A}$ is a different quantity from the $I_{peak}\approx75.8\,\text{A}$ of Section \ref{sec:part_b_fea}: that one is an independent sanity check against the peak-\emph{power} requirement's assumed efficiency/power-factor, while $I_{pk}$ here is the actual current this specific converged rotor design needs to hit its rated \emph{torque}, given its real (flux-linkage-limited) $\Psi_{PM1}$ -- it is what actually gets pushed to the FEM (Table~\ref{tab:params_pushed}). Both stay comfortably under the 107\,A inverter limit.
+
+\subsubsection*{Stage 4: Stator Winding and Core Sizing}
+\label{sec:stator_winding_sizing}
+With the corner-point flux and current-density targets fixed, this stage sizes the winding turns, wire gauge, and stator tooth/slot/yoke dimensions (paper Section VI, eqs. 65--94; \texttt{IPMRotorSizer.\allowbreak computeStatorWindingSizing\_}) -- the source of every stator-side number already quoted in Table~\ref{tab:params_calculated}, not previously derived.
+
+The fundamental pole flux at the corner point, and the EMF per conductor it induces, follow from Stage 2's no-load flux $\phi_{g1o}=7.71\,\text{mWb/m}$ and Stage 3's $\eta_{\phi,c}=0.983$, at the corner frequency $f_c=1020\,\text{Hz}$:
+\begin{equation}
+\label{eq:phi_g1c}
+\Phi_{g1c} = \eta_{\phi,c}\,\phi_{g1o}\,l_e = 0.353\,\text{mWb}, \qquad E_{cc} = \frac{\pi}{\sqrt2}f_c\,\Phi_{g1c} = 0.80\,\text{V} \quad\text{(eqs. 65--66)}
+\end{equation}
+Targeting an EMF-over-voltage utilization $\rho_{EV}=0.65$ against the maximum inverter phase voltage $V_{invM}=0.95V_{dc}/(2\sqrt2)=173.0\,\text{V}$ (eq. 68 -- a different, more conservative voltage-limit model than the modulation-index one used in Section~\ref{sec:corner_speed}; the two haven't been reconciled) gives the conductors in series, rounded through an even conductors-per-slot count:
+\begin{equation}
+\label{eq:conductors_series}
+U_{c,th} = \frac{\rho_{EV}V_{invM}}{k_w E_{cc}} = 154.6, \qquad u = 2\,\text{round}\!\left(\tfrac12\,\frac{3U_{c,th}(P/2)}{N_s}\right) = 194, \qquad U_c = \frac{N_s u}{3(P/2)} = 155.2
+\end{equation}
+(eqs. 69, 72, 73). $U_c$ feeds Stage 5's inductances directly. Sizing the wire gauge from the current-density target $J_{s,rms}=8\,\text{A/mm}^2$, then the slot area from the copper fill factor $k_{Cu}=0.40$ (eqs. 76--84), fixes the tooth width and stator yoke height against the flux-density targets $B_{ts}=1.415\,\text{T}$, $B_{cs}=1.00\,\text{T}$:
+\begin{equation}
+\label{eq:tooth_yoke}
+b_{ts} = \frac{B_{g,1o}}{B_{ts}}\frac{\tau_s}{k_{st}} = 7.64\,\text{mm} \quad\text{(eq. 85)}, \qquad h_{sy} = \frac{\phi_{g1o}}{2B_{cs}k_{st}} = 3.97\,\text{mm} \quad\text{(eq. 93)}
+\end{equation}
+using $\tau_s=13.65\,\text{mm}$ (Section~\ref{sec:vshape_definition}). Adding the resulting slot height ($h=22.9\,\text{mm}$, the closed-form root of a trapezoidal slot-area equation, eq. 89) and the slot-opening height $h_{as}=1.5\,\text{mm}$ (class default) to the bore gives the external stator diameter:
+\begin{equation}
+\label{eq:stator_od}
+D_{es} = D_{is} + 2(h_{as}+h+h_{sy}) = 52.15 + 2(1.5+22.9+3.97) \approx 108.8\,\text{mm} \quad\text{(eq. 94)}
+\end{equation}
+matching Table~\ref{tab:params_calculated}'s stator diameter exactly. One open caveat: this same current-density/linear-current-density pairing also fixes a phase current $I_c=31.7\,\text{A}_{rms}$ (eq. 75) that is not what the rest of Part A or the FEM pipeline actually use -- a third figure alongside the $I_{pk}=74.2\,\text{A}$ (Eq.~\ref{eq:iq_current}) and $I_{peak}\approx75.8\,\text{A}$ (Section~\ref{sec:part_b_fea}) already flagged there, tracing to the same tension between the assumed linear current density $\Delta$ and the actual flux-linkage-limited torque point.
+
+\subsubsection*{Stage 5: Electrical Parameters}
+\label{sec:electrical_parameters}
+The last stage turns Stage 3's reaction coefficients and Stage 4's conductor count into the actual $d$/$q$ inductances and PM flux linkage (paper Section VII, eqs. 48, 52--56; \texttt{IPMRotorSizer.\allowbreak computeElectricalParameters\_} -- the same method that computes $c_d$, $c_q$, Section~\ref{sec:torque_sizing_reaction_coefficients}). The unsaturated reaction inductances follow directly from $\lambda_{is}$ (Eq.~\ref{eq:lambda_is}) and $U_c$ (Eq.~\ref{eq:conductors_series}):
+\begin{equation}
+\label{eq:ldo_lqo}
+L_{do} = c_d\,\lambda_{is}\,\frac{U_c^2}{P}\,l_e = 0.172\,\text{mH}, \qquad L_{qo} = c_q\,\lambda_{is}\,\frac{U_c^2}{P}\,l_e = 0.509\,\text{mH} \quad\text{(eq. 52)}
+\end{equation}
+$L_d$ is taken equal to $L_{do}$ (eq. 54): the large equivalent d-axis air gap ($gk_C+t_m/\mu_{rec}$) keeps that axis close to linear, so its saturation is neglected. $L_q$ is not: it is scaled by Stage 3's saturation factor $\sigma_{s,c}=0.989$ at the operating point (eq. 55), and the resulting gap is exactly the reaction-inductance difference driving Eq.~\ref{eq:ricca_torque_pu}'s anisotropy term (eq. 56):
+\begin{equation}
+\label{eq:lq_final}
+L_q = L_{qo}\,\sigma_{s,c} = 0.504\,\text{mH}, \qquad L_q - L_d = 0.331\,\text{mH}
+\end{equation}
+The PM flux linkage, already used without derivation in Eq.~\ref{eq:iq_current} and Section~\ref{sec:corner_speed}, follows the same pattern (eq. 48):
+\begin{equation}
+\label{eq:psipm1}
+\Psi_{PM1} = \frac{k_w U_c \phi_{g1o}\,\eta_{\phi,c}}{2\sqrt2}\,l_e = \frac{0.91\times155.2\times0.00771\,\text{Wb/m}\times0.983}{2\sqrt2}\times0.04656\,\text{m} \approx 0.0176\,\text{Wb}
+\end{equation}
+Not computed by this pipeline: the true phase leakage inductance $L_\ell$ and AC winding resistance $R(f)$ (paper Section VII.C, eqs. 111--119) -- already flagged in passing at Section~\ref{sec:torque_sizing_reaction_coefficients}'s $\lambda_{is}$ correction. With $L_d$, $L_q$, and $\Psi_{PM1}$ fixed, everything Part A's summary tables below actually draw on -- rotor geometry, stack length, phase advance, stator core, and rated current -- now traces back to a shown equation rather than an unexplained number.
 
 The following table summarizes the first design objectives.
 \begin{center}
