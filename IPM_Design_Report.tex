@@ -314,7 +314,7 @@ The procedure consists of five stages, each corresponding to a section of the pa
 \begin{enumerate}
     \item \textbf{Rotor geometry} (Section IV, eqs. 8--18): bridges, magnet width/thickness, V-angle and pole-shoe dimensions from the stator bore and pole pitch.
     \item \textbf{No-load saturation model} (Section II and III, eqs. 3--7, 38--42): air-gap flux, Carter factor and bridge leakage, giving the no-load flux density $B_{g,1o}$ (Section \ref{sec:stage2_saturation}).
-    \item \textbf{Torque sizing and reaction coefficients} (Section V, eqs. 57--64, 96--110): the alignment/reluctance torque split and optimal current phase advance (Section \ref{sec:saturation_phase_advance}).
+    \item \textbf{Torque sizing and reaction coefficients} (Section V, eqs. 57--64, 96--110): the alignment/reluctance torque split, its geometric reaction coefficients (Section \ref{sec:torque_sizing_reaction_coefficients}), and the optimal current phase advance (Section \ref{sec:saturation_phase_advance}).
     \item \textbf{Stator winding and core sizing} (Section VI, eqs. 65--94): slot count, conductor count/gauge, tooth/yoke dimensions from the corner-point EMF and current density.
     \item \textbf{Electrical parameters} (Section VII, eqs. 95--120): $L_d$, $L_q$, $\Psi_{PM}$.
 \end{enumerate}
@@ -325,7 +325,7 @@ The paper's headline result is that torque splits into an alignment (PM) term an
 \label{eq:ricca_torque_pu}
 f_T(\Delta,\gamma) = \underbrace{\eta_{\phi}\cos\gamma}_{f_{T,al}} + \underbrace{\frac{\sqrt{2}\pi}{6}\frac{c_d\lambda_{is}}{k_w B_{g,1o}}\Delta\left(\sigma_{an}\sigma_s-1\right)\sin(2\gamma)}_{f_{T,an}}
 \end{equation}
-where $\Delta$ is the linear current density, $c_d$ and $\sigma_{an}$ are geometric reaction coefficients from stage 3, $\lambda_{is}$ is the stator leakage inductance, $k_w$ the winding factor, and $\eta_\phi$/$\sigma_s$ the PM-flux and iron saturation factors from stage 2. Maximizing Eq. \ref{eq:ricca_torque_pu} over $\gamma$ gives the optimal phase advance $\gamma_{opt}$ used in Section \ref{sec:saturation_phase_advance}.
+where $\Delta$ is the linear current density, $c_d$ and $\sigma_{an}$ are geometric reaction coefficients from Stage 3 (Section \ref{sec:torque_sizing_reaction_coefficients}), $\lambda_{is}$ is the specific unsaturated reaction permeance (eq. 51, \emph{not} the stator leakage inductance -- that is a separate quantity, $L_\ell$, from paper Section VII.C, eqs. 111--119, which this pipeline does not yet compute), $k_w$ the winding factor, and $\eta_\phi$/$\sigma_s$ the PM-flux and iron saturation factors from stage 2. Maximizing Eq. \ref{eq:ricca_torque_pu} over $\gamma$ gives the optimal phase advance $\gamma_{opt}$ used in Section \ref{sec:saturation_phase_advance}.
 
 \subsubsection*{Stage 1: Rotor Geometry}
 \label{sec:rotor_geometry}
@@ -469,6 +469,58 @@ At the converged design point (\texttt{rotorSizer.summary()}, eqs. 19--22), this
 \caption{Inner bridge stress $\sigma_{ib}$ vs. bridge width $w_{ib}$ (\texttt{rotor\_bridge\_stress\_sweep.m}) at this project's own design point and $n_{max}=14{,}400\,\text{rpm}$, against the M235-35A yield line and the paper's $w_{ib}=5w_{ob}$ manufacturing-floor rule. The margin to yield stays large across the whole swept range -- the bridge is not the constraining factor for this design.}
 \label{fig:rotor_bridge_stress_sweep}
 \end{figure}
+
+\subsubsection*{Stage 3: Torque Sizing and Reaction Coefficients}
+\label{sec:torque_sizing_reaction_coefficients}
+Eq.~\ref{eq:ricca_torque_pu}'s anisotropy term carries two purely geometric factors, $c_d$ and $\sigma_{an}=\sigma_{an,o}=c_q/c_d$, that this stage supplies (paper Section VII, eqs. 95--110; \texttt{IPMRotorSizer.computeElectricalParameters\_}). Physically, $c_d$ and $c_q$ are each the ratio of the actual fundamental reaction-field flux density -- shaped by the pole shoe and blocked by the bridges (fully saturated by the PM leakage flux, hence treated as air) -- to the flux density an idealized \emph{isotropic} rotor of the same air gap would produce for the same reaction MMF:
+\begin{equation}
+\label{eq:bdis_bqis}
+B_{d,is} = \frac{\mu_0 M_d}{k_C g}, \qquad B_{q,is} = \frac{\mu_0 M_q}{k_C g}
+\end{equation}
+Because the reaction MMFs $M_d$, $M_q$ enter every intermediate quantity linearly, they cancel out of the final ratios: $c_d$ and $c_q$ depend only on Stage 1's rotor geometry, not on the winding data or the operating current -- consistent with the paper's own framing of the whole sizing procedure as independent of the winding data. The companion quantity $\lambda_{is}$, also needed by Eq.~\ref{eq:ricca_torque_pu}, is the specific (per-unit-length) unsaturated reaction permeance of an isotropic rotor of this same geometry (eq. 51):
+\begin{equation}
+\label{eq:lambda_is}
+\lambda_{is} = \mu_0 k_w^2\,\frac{3}{\pi^2}\,\frac{\tau_r}{g\,k_C} = 4.78\,\mu\text{H/m}
+\end{equation}
+computed alongside $\gamma_{opt}$ in \texttt{computeTorqueSizing\_} (Section \ref{sec:saturation_phase_advance}).
+
+Both reaction coefficients are extracted the same way: split the quarter-pole electrical angle $\theta_e\in[0,\pi/2]$ into the pole-shoe span $\theta_{ps}=\alpha_m\pi/2=72.0^\circ$ and, beyond it, the rib span out to
+\begin{equation}
+\label{eq:e_rib}
+\theta_{e,rib} = \alpha_m\frac{\pi}{2} + p\,\frac{h_{ob}}{D_r/2} = 74.4^\circ
+\end{equation}
+where $h_{ob}=(\tau_r-2w_{hr}-b_{ps})/2=0.21\,\text{mm}$ (eq. 9, not previously shown in Section \ref{sec:vshape_definition}) is the rotor-OD arc spanned by the outer bridge -- small here because this design's wide pole shoe ($\alpha_m=0.80$) leaves little room between adjacent shoes -- and $p=5$ pole pairs converts that mechanical arc into electrical radians. Beyond $\theta_{e,rib}$, out to $\pi/2$, the rotor is treated as isotropic (unslotted, no shoe).
+
+\textbf{d-axis reaction (eqs. 96--106).} Within the shoe, the air-gap MVD is $M_d\cos\theta_e-U_{psd}$, where the pole-shoe potential $U_{psd}$ (unknown a priori) is fixed by a permeance balance at the shoe node: the flux the shoe pushes into the rotor interior, through the V-cavity permeance
+\begin{equation}
+\label{eq:lambda_ps_ir}
+\Lambda_{ps,ir} = \mu_0\,l_e\,\frac{2w_m + t_m\cos\alpha_v + w_{ib}}{t_m} = 0.255\,\mu\text{H}
+\end{equation}
+(eq. 99), must equal the flux it delivers to the air gap through the shoe-facing permeance $\Lambda_g=\mu_0\alpha_m\tau_r l_e/(k_C g)=0.707\,\mu\text{H}$ (eq. 102). Solving that balance gives $U_{psd}$ in closed form (eq. 104):
+\begin{equation}
+\label{eq:upsd}
+\frac{U_{psd}}{M_d} = \frac{\sin\theta_{ps}/\theta_{ps}}{1+\Lambda_{ps,ir}/\Lambda_g} = \frac{0.757}{1+0.361} = 0.556
+\end{equation}
+so over half of the shoe's reaction MVD is absorbed internally by the V-cavity rather than reaching the air gap -- the mechanism that pulls $c_d$ well below 1. With $b_d(\theta_e)$ zero across the (fully saturated) rib and equal to the isotropic value $B_{d,is}\cos\theta_e$ beyond it, its fundamental component is now fully determined; the paper leaves $B_{d1}=\frac{4}{\pi}\int_0^{\pi/2}b_d(\theta_e)\cos\theta_e\,d\theta_e$ (eq. 105) as an integral to be evaluated numerically (a MathCad artifact -- its own worked example just reports the resulting $c_d=0.201$, not a closed form). \texttt{IPMRotorSizer.m} instead evaluates it analytically, splitting the integral at $\theta_{ps}$ and $\theta_{e,rib}$:
+\begin{equation}
+\label{eq:cd_closed_form}
+c_d = \frac{B_{d1}}{B_{d,is}} = \frac{4}{\pi}\left[\underbrace{\frac{\theta_{ps}}{2}+\frac{\sin2\theta_{ps}}{4}-\frac{U_{psd}}{M_d}\sin\theta_{ps}}_{\text{shoe},\ [0,\,\theta_{ps}]} \;+\; \underbrace{\frac{\pi}{4}-\frac{\theta_{e,rib}}{2}-\frac{\sin2\theta_{e,rib}}{4}}_{\text{isotropic},\ [\theta_{e,rib},\,\pi/2]}\right] = 0.322 \quad\text{(eq. 106)}
+\end{equation}
+
+\textbf{q-axis reaction (eqs. 107--110).} The q-axis case has no unknown potential to solve for: $b_q(\theta_e)=B_{q,is}\sin\theta_e$ holds across both the shoe and isotropic zones, zero across the rib as before (eq. 107). Its fundamental, $B_{q1}=\frac{4}{\pi}\int_0^{\pi/2}b_q(\theta_e)\sin\theta_e\,d\theta_e$ (eq. 108), therefore reduces to a similar closed form without the $U_{psd}$ term:
+\begin{equation}
+\label{eq:cq_closed_form}
+c_q = \frac{B_{q1}}{B_{q,is}} = \frac{4}{\pi}\left[\underbrace{\frac{\theta_{ps}}{2}-\frac{\sin2\theta_{ps}}{4}}_{\text{shoe}} \;+\; \underbrace{\frac{\pi}{4}-\frac{\theta_{e,rib}}{2}+\frac{\sin2\theta_{e,rib}}{4}}_{\text{isotropic}}\right] = 0.951 \quad\text{(eq. 109)}
+\end{equation}
+and the unsaturated anisotropy ratio used directly in Eq.~\ref{eq:ricca_torque_pu} follows:
+\begin{equation}
+\label{eq:sigma_an}
+\sigma_{an} = \sigma_{an,o} = \frac{c_q}{c_d} = \frac{0.951}{0.322} \approx 2.95 \quad\text{(eq. 110)}
+\end{equation}
+
+These closed forms were checked against the paper's own worked example (\texttt{test\_IPMRotorSizer.m}, evaluated at its Table I geometry: $\alpha_m=0.754$, $D=160\,\text{mm}$, 8 poles) and reproduce its reference values $c_d=0.201$, $c_q=0.825$, $\sigma_{an,o}=4.11$ to within 2\%. This project's own values differ substantially -- $c_d=0.322$ vs.\ $0.201$, $\sigma_{an}=2.95$ vs.\ $4.11$ -- mainly because the wider pole shoe chosen here ($\alpha_m=0.80$ vs.\ $0.754$) and the much smaller bore push $\theta_{e,rib}$ closer to $\theta_{ps}$ (a $2.4^\circ$ rib slice out of a $90^\circ$ quarter-pole here, versus a proportionally larger one in the paper's own design), shrinking the ``blocked'' rib share relative to the isotropic tail and letting more of the reaction MVD reach the air gap directly -- particularly on the d-axis, where the internally-absorbed $U_{psd}$ term is the main thing keeping $c_d$ low.
+
+With $c_d$, $\sigma_{an}$, and $\lambda_{is}$ fixed by geometry alone, that is everything Eq.~\ref{eq:ricca_torque_pu} needs from the reaction side; combining them with Stage 2's saturation factors ($\eta_\phi$, $\sigma_s$) to actually maximize $f_T$ over $\gamma$ and size the stack length is carried out next, in Section~\ref{sec:saturation_phase_advance}. One subtlety worth flagging: because \texttt{computeTorqueSizing\_} (which evaluates $\gamma_{opt}$) runs \emph{before} \texttt{computeElectricalParameters\_} within a given pass of \texttt{solve()}, the $c_d$/$\sigma_{an}$ values it actually uses are the \emph{previous} iteration's converged result -- seeded from the paper's own Table I defaults ($c_d=0.201$, $\sigma_{an,o}=4.11$) on the very first pass -- which is itself part of why the five-stage loop needs more than one iteration to begin with (Section~\ref{sec:ricca_methodology}); for this design point, \texttt{IPMRotorSizer.solve()} converges in 2 iterations.
 
 \subsection*{Magnetic Saturation and Optimal Phase Advance}
 \label{sec:saturation_phase_advance}
