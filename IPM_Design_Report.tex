@@ -212,7 +212,7 @@ k &= \lambda\frac{\pi}{P} = 2.0\cdot\frac{\pi}{10} = 0.628 \\
 D_{is} &= \sqrt[3]{\frac{2T}{\pi\,\sigma_m\, k}} = \sqrt[3]{\frac{2\cdot 9.8\,Nm}{\pi\cdot 70{,}000\cdot 0.628}} = 52.15\,\text{mm} \\
 l_e &= k\cdot D_{is} = 0.628\cdot 52.15\,\text{mm} = 32.77\,\text{mm}
 \end{align*}
-We can see that both values result within the design (Tab.\ref{tab:propulsion_motor_requirements}) limits (stack length $32.77\,mm < 110\,mm$ and diameter $52.15\,mm < 120\,mm$). This gives us an idea that the new design is feasible, and even more, it can be noticeably smaller in size than the current one on both axes. Nevertheless, it is important to keep in mind during the design that we are assuming a $\sigma_m$ target of 70,000 $N/m^2$ and a $\lambda=2.0$ pole-pitch aspect ratio, both of which depend on the magnet material selection and a relatively high magnetic flux linkage.
+We can see that both values result within the design (Tab.\ref{tab:propulsion_motor_requirements}) limits (stack length $32.77\,mm < 110\,mm$ and diameter $52.15\,mm < 120\,mm$). This gives us an idea that the new design is feasible. Nevertheless, it is important to keep in mind during the design that we are assuming a $\sigma_m$ target of 70,000 $N/m^2$ and a $\lambda=2.0$ pole-pitch aspect ratio, both of which depend on the magnet material selection and a relatively high magnetic flux linkage.
 \subsubsection*{Formula 2: The $D^3L$ Output Coefficient}
 Formula 1 sizes the machine purely from a torque target and an assumed shear stress, treating the stator outer diameter $D_{os}$ as a free output. We now go the other direction: fix $D_{os}=89.9\,\text{mm}$, the current motor's stator outer diameter, with the rationale that a better design's stator core should not be larger than the older one's, and use the $D^3L$ output coefficient method \cite{LucaLecture6} to find the bore $D_{is}$ that best fills that envelope, for our fixed $P=10$, $N_s=12$ topology.
 
@@ -281,7 +281,7 @@ The choice of permanent magnet material sets the remanent flux density $B_r$ tha
 \label{eq:br_derating}
 B_r = B_{r,20}\left[1+\frac{\alpha_{Br}}{100}(T_{PM}-20)\right] = 1.37\left[1-0.001(140-20)\right] \approx 1.21\,\text{T}
 \end{equation}
-This is the value the flux-linkage/saturation model actually sees -- about 12\% below the room-temperature datasheet rating, and the reason $B_r=1.37\,\text{T}$ can't be used directly.
+This is the value the flux-linkage/saturation model actually sees.
 \\\textbf{Recoil permeability ($\mu_{rec}$):} \textbf{1.05}, typical for sintered NdFeB, used in the reluctance/anisotropy terms of Ricca's model (Section \ref{sec:ricca_methodology}).
 
 \subsubsection*{Corner Speed and Required Flux Linkage}
@@ -304,30 +304,30 @@ To trigger the torque fall at an earlier speed, we must increase $\Psi_m$ (e.g.,
 \begin{equation}
     \Psi_m \approx \frac{V_{\text{phase,peak,max}}}{p\,\omega_{m,base}} \approx \frac{273}{5 \cdot 1282} \approx 0.0426\,\text{Wb}
 \end{equation}
-Ricca's procedure (Section \ref{sec:ricca_methodology}) now converges for this design point and gives $\Psi_{PM1}=0.0176\,\text{Wb}$ (\texttt{IPMRotorSizer.PsiPM1\_Wb}) -- only $\approx$40\% of the $\Psi_m$ target above, even with the N48 magnet (Eq. \ref{eq:br_derating}, $B_r\approx1.21\,\text{T}$ at 140\textdegree{}C). This tracks the no-load flux-density shortfall flagged in Section \ref{sec:ricca_methodology}: with $B_{g,1o}$ itself running low for this pole pitch, $\Psi_{PM1}$ falls short too, so at the current turns/magnet geometry the machine reaches its corner point later than the 12,240\,rpm targeted here. Closing this gap (more turns, a wider magnet, etc.) is an open item for the next design iteration.
+Ricca's procedure (Section \ref{sec:ricca_methodology}) now converges for this design point and gives $\Psi_{PM1}=0.0176\,\text{Wb}$ (\texttt{IPMRotorSizer.PsiPM1\_Wb}) -- only $\approx$40\% of the $\Psi_m$ target above, even with the N48 magnet (Eq. \ref{eq:br_derating}, $B_r\approx1.21\,\text{T}$ at 140\textdegree{}C). This tracks the no-load flux-density shortfall flagged in Section \ref{sec:ricca_methodology}: with $B_{g,1o}$ itself running low for this pole pitch, $\Psi_{PM1}$ falls short too, so at the current turns/magnet geometry the machine reaches its corner point later than the 12,240\,rpm targeted here.
 
 \subsubsection{Ricca's Paper Methodology}
 \label{sec:ricca_methodology}
-Formulas 1 and 2 give a fast first-pass envelope ($D_{is}$, $l_e$) from generic shear-stress/output-coefficient assumptions, but neither captures the distinctive properties of a V-shape rotor: PM flux leaks through the rotor bridges, there is magnetic saturation cross-coupling between the $d$- and $q$-axes, and reluctance-torque ($L_q>L_d$) is possible. For that, we implement the full analytical procedure of Di Gerlando \& Ricca \cite{DiGerlandoRicca2022} (\texttt{IPMRotorSizer.m}), used throughout the remaining subsections of Part A.
+Formulas 1 and 2 give a fast first-pass envelope ($D_{is}$, $le_e$) from generic shear-stress/output-coefficient assumptions, but neither captures the distinctive properties of a V-shape rotor: PM flux leaks through the rotor bridges, there is magnetic saturation cross-coupling between the $d$- and $q$-axes, and reluctance-torque ($L_q>L_d$) is possible. For that, we implement the full analytical procedure of Di Gerlando \& Ricca \cite{DiGerlandoRicca2022} (\texttt{IPMRotorSizer.m}), used throughout the remaining subsections of Part A.
 
 The procedure consists of five stages, each corresponding to a section of the paper:
 \begin{enumerate}
-    \item \textbf{Rotor geometry} (Section IV, eqs. 8--18): bridges, magnet width/thickness, V-angle and pole-shoe dimensions from the stator bore and pole pitch.
+    \item \textbf{Rotor geometry} (Section IV, eqs. 8--18): bridges, magnet width/thickness, V-angle and pole-shoe dimensions from the stator bore and pole pitch (Section \ref{sec:rotor_geometry}).
     \item \textbf{No-load saturation model} (Section II and III, eqs. 3--7, 38--42): air-gap flux, Carter factor and bridge leakage, giving the no-load flux density $B_{g,1o}$ (Section \ref{sec:stage2_saturation}).
     \item \textbf{Torque sizing and reaction coefficients} (Section V, eqs. 57--64, 96--110): the alignment/reluctance torque split, its geometric reaction coefficients (Section \ref{sec:torque_sizing_reaction_coefficients}), and the optimal current phase advance (Section \ref{sec:saturation_phase_advance}).
     \item \textbf{Stator winding and core sizing} (Section VI, eqs. 65--94): slot count, conductor count/gauge, tooth/yoke dimensions from the corner-point EMF and current density (Section \ref{sec:stator_winding_sizing}).
     \item \textbf{Electrical parameters} (Section VII, eqs. 95--120): $L_d$, $L_q$, $\Psi_{PM}$ (Section \ref{sec:electrical_parameters}).
 \end{enumerate}
-Since geometry feeds saturation, saturation feeds torque sizing, and torque sizing feeds stator sizing, \texttt{IPMRotorSizer.solve()} iterates all five stages to convergence rather than solving once through.
+Geometry feeds saturation, saturation feeds torque sizing, and torque sizing feeds stator sizing. \texttt{IPMRotorSizer.solve()} iterates all five stages to convergence.
 
 The paper's headline result is that torque splits into an alignment (PM) term and an anisotropy (reluctance) term, both functions of the current phase advance $\gamma$:
 \begin{equation}
 \label{eq:ricca_torque_pu}
 f_T(\Delta,\gamma) = \underbrace{\eta_{\phi}\cos\gamma}_{f_{T,al}} + \underbrace{\frac{\sqrt{2}\pi}{6}\frac{c_d\lambda_{is}}{k_w B_{g,1o}}\Delta\left(\sigma_{an}\sigma_s-1\right)\sin(2\gamma)}_{f_{T,an}}
 \end{equation}
-where $\Delta$ is the linear current density, $c_d$ and $\sigma_{an}$ are geometric reaction coefficients from Stage 3 (Section \ref{sec:torque_sizing_reaction_coefficients}), $\lambda_{is}$ is the specific unsaturated reaction permeance (eq. 51, \emph{not} the stator leakage inductance -- that is a separate quantity, $L_\ell$, from paper Section VII.C, eqs. 111--119, which this pipeline does not yet compute), $k_w$ the winding factor, and $\eta_\phi$/$\sigma_s$ the PM-flux and iron saturation factors from stage 2. Maximizing Eq. \ref{eq:ricca_torque_pu} over $\gamma$ gives the optimal phase advance $\gamma_{opt}$ used in Section \ref{sec:saturation_phase_advance}.
+where $\Delta$ is the linear current density, $c_d$ and $\sigma_{an}$ are geometric reaction coefficients from Stage 3 (Section \ref{sec:torque_sizing_reaction_coefficients}), $\lambda_{is}$ is the specific unsaturated reaction permeance (\textbf{not} the stator leakage inductance), $k_w$ the winding factor, and $\eta_\phi$ and $\sigma_s$ the PM-flux and iron saturation factors from stage 2. Maximizing Eq. \ref{eq:ricca_torque_pu} over $\gamma$ gives the optimal phase advance $\gamma_{opt}$ used in Section \ref{sec:saturation_phase_advance}.
 
-\subsubsection*{Stage 1: Rotor Geometry}
+\subsubsection{Stage 1: Rotor Geometry}
 \label{sec:rotor_geometry}
 \begin{figure}[H]
     \centering
@@ -335,7 +335,7 @@ where $\Delta$ is the linear current density, $c_d$ and $\sigma_{an}$ are geomet
     \caption{V-Shape IPM Motor Layout}
     \label{fig:ipm_motor_layout}
 \end{figure}
-Stage 1 turns the stator bore and five chosen shape ratios into the rotor's V-cavity dimensions. \textbf{We choose Formula 1's bore $D_{is}=52.15\,\text{mm}$} and air gap $g=1\,\text{mm}$, the rotor outer diameter, pole pitch  and stator slot pitch follow:
+Stage 1 (\texttt{IPMRotorSizer.computeRotorGeometry\_}) turns the stator bore and five chosen shape ratios into the rotor's V-cavity dimensions. \textbf{We choose Formula 1's bore $D_{is}=52.15\,\text{mm}$} and air gap $g=1\,\text{mm}$, the rotor outer diameter, pole pitch  and stator slot pitch follow:
 \begin{align*}
     D_r = D_{is}-2g = 50.15\,\text{mm}, \qquad \tau_r = \frac{\pi D_r}{P} = 15.76\,\text{mm}, \qquad \tau_s=\pi D_{is}/N_s=13.65\,\text{mm}
 \end{align*}
@@ -369,30 +369,22 @@ A shared auxiliary length, the shoe's tangential half-width at the bridge corner
     \label{eq:dps}
     d_{ps} = \underbrace{\frac{d_{12}-w_{ib}/2}{\tan\alpha_v}}_{=\,1.03\,\text{mm}} + \underbrace{\left(\frac{D_r}{2}-w_{ob}\right) - \frac{d_{12}}{\tan(\alpha_m\pi/P)}}_{=\,0.77\,\text{mm}} + w_{ob} = 2.31\,\text{mm}
 \end{equation}
-Two results close the stage. Eq.~\ref{eq:dir} checks the rotor bore clears the pole shoe, inner bridge, and ribs -- keeping the d-axis flux from short-circuiting across the shaft:
+Eq.~\ref{eq:dir} checks the rotor bore, keeping the d-axis flux from short-circuiting across the shaft:
 \begin{equation}
     \label{eq:dir}
     D_{ir} = D_r - 2\,(d_{ps}+h_{ib}+h_{ry}) = 50.15-2\,(2.31+2.93+2.05) = 35.58\,\text{mm}
 \end{equation}
-Eq.~\ref{eq:wm} gives the magnet segment width, reused in Section \ref{sec:bridge_sizing}'s magnet-mass estimate:
+Eq.~\ref{eq:wm} gives the magnet segment width:
 \begin{equation}
     \label{eq:wm}
     w_m = \frac{d_{12}-w_{ib}/2}{\sin\alpha_v} = 4.97\,\text{mm}
 \end{equation}
 
-Figure~\ref{fig:rotor_pole_geometry_scale} shows the resulting cavity to scale, at this design's own converged values, with every quantity defined above labeled directly on the geometry.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{figures/rotor_pole_geometry.png}
-    \caption{One rotor pole's V-cavity cross-section, to scale (all lengths in mm), generated from this design's own converged Stage-1 values by \texttt{Figure\_Scripts/rotor\_pole\_geometry.py}. Broken view: the drawing is cropped just below $D_{ir}$, since the solid core continues inward to the shaft. Pole-shoe/bridge corner fillets are simplified to straight joins; every labeled dimension is exact.}
-    \label{fig:rotor_pole_geometry_scale}
-\end{figure}
-
-\subsubsection*{Stage 2: No-load Saturation Model}
+\subsubsection{Stage 2: No-load Saturation Model}
 \label{sec:stage2_saturation}
-Stage 2 (\texttt{IPMRotorSizer.computeSaturationModel\_}) turns the Stage 1 geometry and the stator slot opening into two results the rest of the procedure depends on: Carter's factor $k_C$ and the iron-saturation function $\sigma_{sM}(M_q)$ that Section \ref{sec:saturation_phase_advance} evaluates at the corner-point MMF, and the no-load fundamental air-gap flux density $B_{g,1o}$ that anchors the specific-torque equation (Eq.~\ref{eq:specific_torque}) and everything downstream of it.
+Stage 2 (\texttt{IPMRotorSizer.computeSaturationModel\_}) turns the Stage 1 geometry and the stator slot opening into two results the rest of the procedure depends on: Carter's factor $k_C$ and the iron-saturation function $\sigma_{sM}(M_q)$ that Section \ref{sec:saturation_phase_advance} evaluates at the corner-point MMF, and the no-load fundamental air-gap flux density $B_{g,1o}$ that anchors the specific-torque equation (Eq.~\ref{eq:specific_torque}) and everything after it.
 
-\paragraph{Carter's factor.} With the slot opening $b_{as}=2\,\text{mm}$ (\texttt{spec.SlotOpening\_mm}, default), air gap $g=1\,\text{mm}$, and stator slot pitch $\tau_s=13.65\,\text{mm}$ (Section \ref{sec:rotor_geometry}), the standard slot-opening Carter coefficient (not itself one of the paper's numbered equations) gives:
+\paragraph{Carter's factor.} We define the stator slot opening as $b_{as}=2\,\text{mm}$ (\texttt{spec.SlotOpening\_mm}). The Carter coefficient gives:
 \begin{equation}
     \label{eq:carter_gamma}
     \gamma_C = \frac{(b_{as}/g)^2}{5+b_{as}/g} = \frac{2^2}{5+2} \approx 0.571
@@ -402,9 +394,19 @@ Stage 2 (\texttt{IPMRotorSizer.computeSaturationModel\_}) turns the Stage 1 geom
     k_C = \frac{\tau_s}{\tau_s-\gamma_C\,g} = \frac{13.65}{13.65-0.571\times1} \approx 1.044
 \end{equation}
 
-\paragraph{Iron saturation function (eqs. 3--7).} The same stage builds the q-axis saturation function $\sigma_{sM}(M_q)$ used at the loaded corner point (Section \ref{sec:saturation_phase_advance}). It works back from the digitized M235-35A $B$--$H$ curve (Fig.~\ref{fig:bh_curve}): the tooth flux density $B_{tG}$ is solved implicitly from the air-gap flux density $B_{gI}$ (eq. 3), which sets the saturation ratio $\rho_{sat}(B_{gI})=1+H_{fe}(B_{tG})\,\rho_{hte,g}/(B_{gI}/\mu_0/k_C)$ (eq. 4) and the peak MMF $M_I(B_{gI})=B_{gI}\,g\,k_C\,\rho_{sat}/\mu_0$ needed to drive it (eq. 5). Inverting $M_I(B_{gI})$ for a given q-axis MMF $M_q$ (eq. 6) gives $\sigma_{sM}(M_q)=B_p(M_q)\,g\,k_C/(\mu_0 M_q)$ (eq. 7), plotted in Fig.~\ref{fig:saturation_factor}. The geometric ratios feeding this, $\rho_{bt,s}=b_{ts}/\tau_s$ and $\rho_{hte,g}=h_{te}/g$ (eqs. 86, 91), are supplied by Stage 4's stator winding/core sizing and updated over \texttt{solve()}'s outer iteration; at this design's converged point they settle at $\rho_{bt,s}\approx0.560$ and $\rho_{hte,g}\approx32.0$. Stage 2 itself only needs $\sigma_{sM}$ at $M_q=0$, where it is unsaturated by definition ($\sigma_{sM}\to1$) -- which is why the no-load flux below is derived independently, straight from the PM's own magnetic circuit, rather than by evaluating this function at zero.
+\paragraph{Iron saturation function.} 
+In theory, as we increase the current $I_q$, the magnetic flux increases linearly along with the torque. In reality, iron saturates. We come up with an iron-saturation function $\sigma_{sM}(M_q)$, which is a penalty ranging from 1 (no saturation) to ~0.15 (full saturation). From \cite{DiGerlandoRicca2022} we extract M235-35A Extended permeability curve and convert that into an $H$--$B$ curve (Fig.~\ref{fig:bh_curve}).
 
-\paragraph{No-load flux density (eqs. 24, 38--42).} At no load the PM alone drives the pole-shoe flux. The residual flux crossing the two magnet segments per pole, per unit stack length, is (eq. 24):
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/m235_35a_bh_curve.png}
+\caption{M235-35A pu permeability and $H_{fe}(B)$ curve, the lattter used by the saturation model solver.}
+\label{fig:bh_curve}
+\end{figure}
+
+The tooth flux density $B_{t}$ is solved implicitly from the air-gap flux density $B_{gI}$, which sets the saturation ratio $\rho_{sat}(B_{gI})=1+H_{fe}(B_{tG})\,\rho_{hte,g}/(B_{gI}/\mu_0/k_C)$ and the peak MMF $M_I(B_{gI})=B_{gI}\,g\,k_C\,\rho_{sat}/\mu_0$ needed to drive it. Inverting $M_I(B_{gI})$ for a given q-axis MMF $M_q$ gives $\sigma_{sM}(M_q)=B_p(M_q)\,g\,k_C/(\mu_0 M_q)$, plotted in Fig.~\ref{fig:saturation_factor}. The geometric ratios feeding this, $\rho_{bt,s}=b_{ts}/\tau_s$ and $\rho_{hte,g}=h_{te}/g$ (eqs. 86, 91), are supplied by Stage 4's stator winding/core sizing and updated over \texttt{solve()}'s outer iteration; at this design's converged point they settle at $\rho_{bt,s}\approx0.560$ and $\rho_{hte,g}\approx32.0$. Stage 2 itself only needs $\sigma_{sM}$ at $M_q=0$, where it is unsaturated by definition ($\sigma_{sM}\to1$) -- which is why the no-load flux below is derived independently, straight from the PM's own magnetic circuit, rather than by evaluating this function at zero.
+
+\paragraph{No-load flux density.} At no load the PM alone drives the pole-shoe flux. The residual flux crossing the two magnet segments per pole, per unit stack length, is (eq. 24):
 \begin{equation}
     \label{eq:phi_pm}
     \phi_{PM} = B_r \cdot 2w_m = 1.206\times2\times4.97\times10^{-3} \approx 11.98\,\text{mWb/m}
@@ -470,7 +472,7 @@ At the converged design point (\texttt{rotorSizer.summary()}, eqs. 19--22), this
 \label{fig:rotor_bridge_stress_sweep}
 \end{figure}
 
-\subsubsection*{Stage 3: Torque Sizing and Reaction Coefficients}
+\subsubsection{Stage 3: Torque Sizing and Reaction Coefficients}
 \label{sec:torque_sizing_reaction_coefficients}
 Eq.~\ref{eq:ricca_torque_pu}'s anisotropy term carries two purely geometric factors, $c_d$ and $\sigma_{an}=\sigma_{an,o}=c_q/c_d$, that this stage supplies (paper Section VII, eqs. 95--110; \texttt{IPMRotorSizer.\allowbreak computeElectricalParameters\_}). Physically, $c_d$ and $c_q$ are each the ratio of the actual fundamental reaction-field flux density -- shaped by the pole shoe and blocked by the bridges (fully saturated by the PM leakage flux, hence treated as air) -- to the flux density an idealized \emph{isotropic} rotor of the same air gap would produce for the same reaction MMF:
 \begin{equation}
@@ -536,12 +538,6 @@ To maximize torque output within the current limit, the optimal phase advance an
 Both the M235-35A BH curve and the resulting saturation factor $\sigma_{sM}(M_q)$ that feed this stage were validated against the reference paper's own Fig. 2/Fig. 3 at its worked-example design point (Section \ref{sec:ricca_methodology}), not this project's much smaller machine -- shown here for that reason.
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\linewidth]{figures/m235_35a_bh_curve.png}
-\caption{M235-35A BH curve digitized from the paper's Fig. 2 (\texttt{IPMRotorSizer.BFE\_DATA}/\texttt{HFE\_DATA}), used internally by the saturation model. Left: $\mu_{fe,pu}$ vs. $B$, same axes as the paper's own figure. Right: $H_{fe}(B)$, the orientation the solver actually interpolates on.}
-\label{fig:bh_curve}
-\end{figure}
-\begin{figure}[H]
-\centering
 \includegraphics[width=0.7\linewidth]{figures/saturation_factor_sigma_sM.png}
 \caption{q-axis saturation factor $\sigma_{sM}(M_q)$ (eq. 7), eye-comparable against the paper's own Fig. 3.}
 \label{fig:saturation_factor}
@@ -564,7 +560,7 @@ The same converged design point also fixes the phase current the rest of Part A 
 \end{equation}
 This $I_{pk}=74.2\,\text{A}$ is a different quantity from the $I_{peak}\approx75.8\,\text{A}$ of Section \ref{sec:part_b_fea}: that one is an independent sanity check against the peak-\emph{power} requirement's assumed efficiency/power-factor, while $I_{pk}$ here is the actual current this specific converged rotor design needs to hit its rated \emph{torque}, given its real (flux-linkage-limited) $\Psi_{PM1}$ -- it is what actually gets pushed to the FEM (Table~\ref{tab:params_pushed}). Both stay comfortably under the 107\,A inverter limit.
 
-\subsubsection*{Stage 4: Stator Winding and Core Sizing}
+\subsubsection{Stage 4: Stator Winding and Core Sizing}
 \label{sec:stator_winding_sizing}
 With the corner-point flux and current-density targets fixed, this stage sizes the winding turns, wire gauge, and stator tooth/slot/yoke dimensions (paper Section VI, eqs. 65--94; \texttt{IPMRotorSizer.\allowbreak computeStatorWindingSizing\_}) -- the source of every stator-side number already quoted in Table~\ref{tab:params_calculated}, not previously derived.
 
@@ -590,7 +586,7 @@ D_{es} = D_{is} + 2(h_{as}+h+h_{sy}) = 52.15 + 2(1.5+22.9+3.97) \approx 108.8\,\
 \end{equation}
 matching Table~\ref{tab:params_calculated}'s stator diameter exactly. One open caveat: this same current-density/linear-current-density pairing also fixes a phase current $I_c=31.7\,\text{A}_{rms}$ (eq. 75) that is not what the rest of Part A or the FEM pipeline actually use -- a third figure alongside the $I_{pk}=74.2\,\text{A}$ (Eq.~\ref{eq:iq_current}) and $I_{peak}\approx75.8\,\text{A}$ (Section~\ref{sec:part_b_fea}) already flagged there, tracing to the same tension between the assumed linear current density $\Delta$ and the actual flux-linkage-limited torque point.
 
-\subsubsection*{Stage 5: Electrical Parameters}
+\subsubsection{Stage 5: Electrical Parameters}
 \label{sec:electrical_parameters}
 The last stage turns Stage 3's reaction coefficients and Stage 4's conductor count into the actual $d$/$q$ inductances and PM flux linkage (paper Section VII, eqs. 48, 52--56; \texttt{IPMRotorSizer.\allowbreak computeElectricalParameters\_} -- the same method that computes $c_d$, $c_q$, Section~\ref{sec:torque_sizing_reaction_coefficients}). The unsaturated reaction inductances follow directly from $\lambda_{is}$ (Eq.~\ref{eq:lambda_is}) and $U_c$ (Eq.~\ref{eq:conductors_series}):
 \begin{equation}
@@ -628,7 +624,7 @@ The following table summarizes the first design objectives.
 \textbf{Pole Number} & $P$ & 10 & Sized to maximize the AMK RACING KIT inverter frequency limit. \\
 \textbf{Slot Number} & $N_s$ & 12 & Low cogging torque when combined with the 10 poles. \\
 \textbf{Stack Length} & $l_e$ & 46.6 mm & Ricca's converged torque-sizing result (eq.~\ref{eq:stack_length}, Sec.~\ref{sec:saturation_phase_advance}). \\
-\textbf{Stator Outer Diameter} & $D_{os}$ & 89.9 mm & Re-use the cooling jacket from the previous design. \\
+\textbf{Stator Outer Diameter} & $D_{os}$ & 108.8 mm & From Stage 4 (\ref{sec:stator_winding_sizing}). \\
 \textbf{Line Voltage} & $V_{line}$ & 515 V & It is within the nominal range of the inverter. \\
 \textbf{Target Nominal Power} & $P_{nom}$ & $\approx$12.6 kW & $P_{nom}=T_{nom}\cdot\omega_{base}=9.8\,\text{Nm}\times1281.8\,\text{rad/s}$ at the corner speed. \\
 \textbf{Target Peak Power} & $P_{peak}$ & 26 kW & Sized to maximize the inverter capacity (26 kVA/channel). \\
@@ -788,7 +784,7 @@ Peak displacement & 0.069 mm \\
 \end{itemize}
 At the rated point (9.8\,Nm, $n_{base}=12{,}240$\,rpm, $I_{pk}=74.2$\,A -- the same current validated by FEM above), this gives $P_{cu}\approx4.99\,\text{kW}$, $P_{fe}\approx0.33\,\text{kW}$, and an efficiency of $\approx70\%$. This is markedly lower than the $\eta=0.92$ assumed in Section \ref{sec:part_b_fea}'s electromechanical power modeling, and traces directly to the same flux-linkage shortfall discussed throughout Part A and Section \ref{sec:sim_framework}: with $\Psi_{PM1}$ under target, more current ($I_{pk}=74.2\,\text{A}$, eq.~\ref{eq:iq_current}) is needed to produce the same torque than a fully-fluxed design would need, which raises $I^2R$ loss directly. Closing the leakage-model gap (README.md's "Known issues" section) is therefore not just a torque/flux-linkage fix -- it is the single highest-leverage change for this design's actual efficiency.
 
-Figure \ref{fig:efficiency_map} sweeps this loss model over the full torque-speed grid ($T\in[0,9.8]\,\text{Nm}$, $n\in[0,14{,}400]\,\text{rpm}$, the design's own continuous rating and inverter-limited speed cap), with $I_d=0$ below corner speed (matching Section \ref{sec:ricca_methodology}'s own corner-point assumption) and a simplified voltage-limited flux-weakening solve above it. The narrow infeasible band immediately above corner speed is a direct, honest consequence of the same flux-linkage shortfall: at this design's actual (low) $\Psi_{PM1}$, sustaining full torque needs more current than the voltage budget allows once speed rises even slightly, so this map's flux-weakening range is narrower than the $1.18\times$ ratio Section \ref{sec:corner_speed} targets. The assignment's peak-torque (5\,s, $21.5$\,Nm) and spec max-speed ($20{,}000$\,rpm) targets are marked for context only -- neither is evaluated by this continuous-duty loss model.
+Figure \ref{fig:efficiency_map} sweeps this loss model over the full torque-speed grid ($T\in[0,9.8]\,\text{Nm}$, $n\in[0,14{,}400]\,\text{rpm}$, the design's own continuous rating and inverter-limited speed cap), with $I_d=0$ below corner speed (matching Section \ref{sec:ricca_methodology}'s own corner-point assumption) and a simplified voltage-limited flux-weakening solve above it. The narrow infeasible band immediately above corner speed is a direct, honest consequence of the same flux-linkage shortfall: at this design's actual (low) $\Psi_{PM1}$, sustaining full torque needs more current than the voltage budget allows once speed rises even slightly, so this map's flux-weakening range is narrower than the $1.18\times$ ratio Section \ref{sec:corner_speed} targets. The assignment's peak-torque (5\,s, $21.5$\,Nm) and spec max-speed ($20{,}000$\,rpm) targets are marked for context only; neither is evaluated by this continuous-duty loss model.
 
 \begin{figure}[H]
 \centering
@@ -800,14 +796,14 @@ Figure \ref{fig:efficiency_map} sweeps this loss model over the full torque-spee
 \section{Thermal and Mechanical Analysis}
 A critical design constraint is the existing \textbf{4\,l/min liquid cooling loop}, originally sized for the current motor's 12.4\,kW rating. The mechanical side of this section is already covered by full FEM in Section \ref{sec:sim_framework} (peak von Mises stress and displacement, Table~\ref{tab:fem_results}); this section covers the thermal side, which stops short of a full thermal FEM or lumped-parameter model in this design iteration.
 
-The analytical loss model from Section \ref{sec:efficiency_map} puts total loss at the rated point at $P_{cu}+P_{fe}\approx5.32\,\text{kW}$ ($4.99$\,kW copper, $0.33$\,kW core) against an $\approx$12.6\,kW mechanical output (Table~\ref{tab:motor_design_data}) -- a substantial heat load, dominated by copper loss, and itself inflated by the same flux-linkage shortfall discussed throughout this report (Sections \ref{sec:corner_speed}, \ref{sec:efficiency_map}). Whether the existing 4\,l/min loop can hold this load within the magnets' demagnetization limit and the winding insulation's temperature class depends on convective/conductive thermal resistances not modeled here; sizing a lumped-parameter or thermal-FEM model against this loss figure is the natural next step before the design can be considered thermally validated. The $140\,\text{\textdegree{}C}$ PM operating temperature already assumed in Section \ref{sec:magnet_material} (and the resulting need for a high-temperature-stable magnet variant) reflects an expectation that this loss level runs hot, not a validated steady-state result.
+The analytical loss model from Section \ref{sec:efficiency_map} puts total loss at the rated point at $P_{cu}+P_{fe}\approx5.32\,\text{kW}$ ($4.99$\,kW copper, $0.33$\,kW core) against an $\approx$12.6\,kW mechanical output (Table~\ref{tab:motor_design_data}) ; a substantial heat load, dominated by copper loss, and itself inflated by the same flux-linkage shortfall discussed throughout this report (Sections \ref{sec:corner_speed}, \ref{sec:efficiency_map}). Whether the existing 4\,l/min loop can hold this load within the magnets' demagnetization limit and the winding insulation's temperature class depends on convective/conductive thermal resistances not modeled here; sizing a lumped-parameter or thermal-FEM model against this loss figure is the natural next step before the design can be considered thermally validated. The $140\,\text{\textdegree{}C}$ PM operating temperature already assumed in Section \ref{sec:magnet_material} (and the resulting need for a high-temperature-stable magnet variant) reflects an expectation that this loss level runs hot, not a validated steady-state result.
 
 \section{Conclusion}
 Starting from the current 10-pole/12-slot DD5-14-10-POW motor and its inverter-limited 1.1 flux-weakening ratio (Section \ref{sec:Inverter}), Part A defined boundary requirements (Table~\ref{tab:propulsion_motor_requirements}) and, keeping the pole/slot count for its proven cogging-torque and winding benefits (Section \ref{sec:pole_slot_number}), sized a V-shape IPM rotor targeting $L_q>L_d$ for added reluctance torque. Two independent Esson's-rule estimates (Sections \ref{sec:ricca_methodology}) bracket a feasible bore/stack-length envelope inside the 120\,mm/110\,mm boundary, and the full Di Gerlando \& Ricca sizing procedure (\texttt{IPMRotorSizer}) converges end-to-end for this design point, giving a complete geometry, winding, and rated operating point (Table~\ref{tab:motor_design_data}) together with a rotor-bridge stress check that is comfortably safe at the 14,400\,rpm operating cap (Section \ref{sec:bridge_sizing}).
 
-Part B (Section \ref{sec:part_b_fea}) exercised this pipeline end-to-end: \texttt{ComsolPrebuiltInterface} pushed the converged design into the prebuilt COMSOL model and ran the coupled EM/structural transient study, giving $8.48\,\text{Nm}$ average torque ($4.9\%$ ripple), $63.0\,\text{MPa}$ peak von Mises stress, and $0.069\,\text{mm}$ peak displacement (Section \ref{sec:sim_framework}, Table~\ref{tab:fem_results}) -- structurally safe with margin, though the torque undershoots the $9.8\,\text{Nm}$ analytical target for the reason discussed below. An analytical loss model (Section \ref{sec:efficiency_map}) additionally swept the full torque-speed envelope, giving the energy efficiency map and a quantified rated-point efficiency of $\approx70\%$.
+Part B (Section \ref{sec:part_b_fea}) exercised this pipeline end-to-end: \texttt{ComsolPrebuiltInterface} pushed the converged design into the prebuilt COMSOL model and ran the coupled EM/structural transient study, giving $8.48\,\text{Nm}$ average torque ($4.9\%$ ripple), $63.0\,\text{MPa}$ peak von Mises stress, and $0.069\,\text{mm}$ peak displacement (Section \ref{sec:sim_framework}, Table~\ref{tab:fem_results}) ; structurally safe with margin, though the torque undershoots the $9.8\,\text{Nm}$ analytical target for the reason discussed below. An analytical loss model (Section \ref{sec:efficiency_map}) additionally swept the full torque-speed envelope, giving the energy efficiency map and a quantified rated-point efficiency of $\approx70\%$.
 
-Two related open items should be resolved before the design is considered converged: (1) the no-load leakage constant inside \texttt{IPMRotorSizer} is calibrated to the reference paper's larger pole pitch and underestimates leakage by roughly $4$--$6\times$ at this project's tighter 10-pole/12-slot geometry (README.md's "Known issues" section), which is the most likely cause of the required flux linkage $\Psi_m\approx0.0426$\,Wb (Section \ref{sec:corner_speed}) not yet being met by the converged $\Psi_{PM1}=0.0176$\,Wb -- and, now quantified, the direct cause of the FEM torque shortfall (Section \ref{sec:sim_framework}) and the $\approx70\%$ rated-point efficiency (Section \ref{sec:efficiency_map}), since hitting the intended torque with too little flux means drawing more current than planned, at a direct $I^2R$ cost; and (2) the resulting stator outer diameter ($D_{es}=108.8\,\text{mm}$) still exceeds the old motor's own 89.9\,mm stator-core OD (Section \ref{sec:current_motor_background}) by about 19\,mm, though it remains within the 120\,mm boundary requirement including cooling. Closing the leakage-model gap first is the natural next step, since it directly affects all three figures.
+Two related open items should be resolved before the design is considered converged: (1) the no-load leakage constant inside \texttt{IPMRotorSizer} is calibrated to the reference paper's larger pole pitch and underestimates leakage by roughly $4$;$6\times$ at this project's tighter 10-pole/12-slot geometry (README.md's "Known issues" section), which is the most likely cause of the required flux linkage $\Psi_m\approx0.0426$\,Wb (Section \ref{sec:corner_speed}) not yet being met by the converged $\Psi_{PM1}=0.0176$\,Wb ; and, now quantified, the direct cause of the FEM torque shortfall (Section \ref{sec:sim_framework}) and the $\approx70\%$ rated-point efficiency (Section \ref{sec:efficiency_map}), since hitting the intended torque with too little flux means drawing more current than planned, at a direct $I^2R$ cost; and (2) the resulting stator outer diameter ($D_{es}=108.8\,\text{mm}$) still exceeds the old motor's own 89.9\,mm stator-core OD (Section \ref{sec:current_motor_background}) by about 19\,mm, though it remains within the 120\,mm boundary requirement including cooling. Closing the leakage-model gap first is the natural next step, since it directly affects all three figures.
 
 \bibliographystyle{plain}
 \bibliography{references}
