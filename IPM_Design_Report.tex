@@ -284,7 +284,7 @@ B_r = B_{r,20}\left[1+\frac{\alpha_{Br}}{100}(T_{PM}-20)\right] = 1.37\left[1-0.
 This is the value the flux-linkage/saturation model actually sees.
 \\\textbf{Recoil permeability ($\mu_{rec}$):} \textbf{1.05}, typical for sintered NdFeB, used in the reluctance/anisotropy terms of Ricca's model (Section \ref{sec:ricca_methodology}).
 
-\subsubsection*{Corner Speed and Required Flux Linkage}
+\subsubsection{Corner Speed and Required Flux Linkage}
 \label{sec:corner_speed}
 The point where torque begins to fall is defined as the Corner Speed ($\omega_{base}$), occurring when the motor's internal Back-Electromotive Force (Back-EMF) reaches the maximum voltage available from the inverter. This relationship is governed by:
 
@@ -394,6 +394,35 @@ Stage 2 (\texttt{IPMRotorSizer.computeSaturationModel\_}) turns the Stage 1 geom
     k_C = \frac{\tau_s}{\tau_s-\gamma_C\,g} = \frac{13.65}{13.65-0.571\times1} \approx 1.044
 \end{equation}
 
+\paragraph{No-load flux density.} At no load the PM alone drives the pole-shoe flux. The residual flux crossing the two magnet segments per pole, per unit stack length, is % (Paper eq. 24):
+\begin{equation}
+    \label{eq:phi_pm}
+    \phi_{PM} = B_r \cdot 2w_m = 1.206\times2\times4.97\times10^{-3} \approx 11.98\,\text{mWb/m}
+\end{equation}
+using the temperature-derated $B_r=1.206\,\text{T}$ (Eq.~\ref{eq:br_derating}) and the magnet width $w_m=4.97\,\text{mm}$ from Stage 1 (Eq.~\ref{eq:wm}). Part of this leaks locally through the inner/outer bridges instead of crossing the air gap; \texttt{IPMRotorSizer} models both bridges combined with a single constant leakage fraction, $\ell_{no\text{-}load}=16.6\%$ (\texttt{leakage\_no\_load}). % calibrated to reproduce the reference paper's own Fig.~8 at $M_q=0$. As flagged in Section \ref{sec:ricca_methodology} and revisited in Section \ref{sec:sim_framework} , this constant is one of the report's open items: calibrated to the paper's larger pole pitch, it is documented to underestimate leakage by roughly 4--6$\times$ at this project's tighter 10-pole/12-slot geometry, and is the most likely single cause of the flux-linkage shortfall traced throughout \ref{sec:corner_speed}.
+
+The specific flux actually reaching the pole shoe, and the resulting flux %(eq. 39)
+density averaged over the shoe's angular span $\alpha_m\tau_r$, follow as: %(Paper eq. 40)
+\begin{equation}
+    \label{eq:phi_go}
+    \phi_{go} = \phi_{PM}\left(1-\ell_{no\text{-}load}\right)\alpha_m = 11.98\times(1-0.166)\times0.80 \approx 7.996\,\text{mWb/m}
+\end{equation}
+\begin{equation}
+    \label{eq:b_go}
+    B_{go} = \frac{\phi_{go}}{\alpha_m\tau_r} = \frac{7.996\times10^{-3}}{0.80\times15.76\times10^{-3}} \approx 0.634\,\text{T}
+\end{equation}
+where $\tau_r=15.76\,\text{mm}$ is the rotor pole pitch (Section \ref{sec:rotor_geometry}). $B_{go}$ is the flux density averaged over the pole-shoe arc; its fundamental Fourier component (used from now on) follows the standard width-$\alpha_m\pi$ square-wave factor: % (eq. 41):
+\begin{equation}
+    \label{eq:bg1o}
+    B_{g,1o} = \frac{4}{\pi}\sin\!\left(\alpha_m\frac{\pi}{2}\right)B_{go} = \frac{4}{\pi}\sin(72^\circ)\times0.634 \approx 0.768\,\text{T}
+\end{equation}
+and, converting back to a specific flux for use alongside $\phi_{go}$ elsewhere in the procedure: % (eq. 42):
+\begin{equation}
+    \label{eq:phi_g1o}
+    \phi_{g1o} = \frac{2}{\pi}B_{g,1o}\,\tau_r \approx 7.71\,\text{mWb/m}
+\end{equation}
+$B_{g,1o}=0.768\,\text{T}$ (\texttt{IPMRotorSizer.Bg1o\_T}) is the value quoted throughout the rest of Part A: the specific-torque equation (Eq.~\ref{eq:specific_torque}), the optimal phase advance search (Section \ref{sec:saturation_phase_advance}), and, downstream of the PM flux linkage $\Psi_{PM1}$, the corner-speed check of Section \ref{sec:corner_speed}.
+
 \paragraph{Iron saturation function.} 
 In theory, as we increase the current $I_q$, the magnetic flux increases linearly along with the torque. In reality, iron saturates. We come up with an iron-saturation function $\sigma_{sM}(M_q)$, which is a penalty ranging from 1 (no saturation) to ~0.15 (full saturation). From \cite{DiGerlandoRicca2022} we extract M235-35A Extended permeability curve and convert that into an $H$--$B$ curve (Fig.~\ref{fig:bh_curve}).
 
@@ -409,36 +438,10 @@ The tooth flux density $B_{t}$ is solved implicitly from the air-gap flux densit
     \label{eq:tooth_flux_implicit}
     B_t = \frac{B_{gI}}{\rho_{bt,s}\,k_{st}} - \frac{\mu_0 H_{fe}(B_t)}{k_{st}}\left(\frac{1}{\rho_{bt,s}}-1\right)
 \end{equation}
-where $B_{gI}$ is the peak air-gap flux density driven by the q-axis reaction MMF, $B_t$ the tooth flux density it induces, $\rho_{bt,s}$ the tooth-to-slot-pitch ratio (defined below), $\mu_0$ the permeability of free space, and $H_{fe}(\cdot)$ the BH-curve interpolant of Fig.~\ref{fig:bh_curve}. $B_t$ shows up on both sides here; once linearly, once inside the nonlinear $H_{fe}(\cdot)$ interpolant built from the BH curve (Fig.~\ref{fig:bh_curve}), so there's no closed-form solution. \texttt{computeSaturationModel\_} instead root-finds it (\texttt{fzero}) on a grid of $B_{gI}$ values and caches the result as a pchip interpolant $B_t(B_{gI})$, so the rest of the solve just looks it up instead of re-solving Eq.~\ref{eq:tooth_flux_implicit} on every call. This sets the saturation ratio 
-$$\rho_{sat}(B_{gI})=1+H_{fe}(B_t)\,\rho_{hte,g}/(B_{gI}/\mu_0/k_C)$$ (with $\rho_{hte,g}$ the tooth-height-to-air-gap ratio, defined below, and $k_C$ Carter's factor, Eq.~\ref{eq:carter_factor}) and the peak MMF $M_I(B_{gI})=B_{gI}\,g\,k_C\,\rho_{sat}/\mu_0$ needed to drive it. Inverting $M_I(B_{gI})$ for a given q-axis MMF $M_q$ gives $\sigma_{sM}(M_q)=B_p(M_q)\,g\,k_C/(\mu_0 M_q)$, plotted in Fig.~\ref{fig:saturation_factor}. The geometric ratios feeding this, $\rho_{bt,s}=b_{ts}/\tau_s$ and $\rho_{hte,g}=h_{te}/g$ (eqs. 86, 91), are supplied by Stage 4's stator winding/core sizing and updated over \texttt{solve()}'s outer iteration; at this design's converged point they settle at $\rho_{bt,s}\approx0.560$ and $\rho_{hte,g}\approx32.0$. Stage 2 itself only needs $\sigma_{sM}$ at $M_q=0$, where it is unsaturated by definition ($\sigma_{sM}\to1$) -- which is why the no-load flux below is derived independently, straight from the PM's own magnetic circuit, rather than by evaluating this function at zero.
-
-\paragraph{No-load flux density.} At no load the PM alone drives the pole-shoe flux. The residual flux crossing the two magnet segments per pole, per unit stack length, is (eq. 24):
-\begin{equation}
-    \label{eq:phi_pm}
-    \phi_{PM} = B_r \cdot 2w_m = 1.206\times2\times4.97\times10^{-3} \approx 11.98\,\text{mWb/m}
-\end{equation}
-using the temperature-derated $B_r=1.206\,\text{T}$ (Eq.~\ref{eq:br_derating}) and the magnet width $w_m=4.97\,\text{mm}$ from Stage 1 (Eq.~\ref{eq:wm}). Part of this leaks locally through the inner/outer bridges instead of crossing the air gap; \texttt{IPMRotorSizer} models both bridges combined with a single constant leakage fraction, $\ell_{no\text{-}load}=16.6\%$ (\texttt{leakage\_no\_load}), calibrated to reproduce the reference paper's own Fig.~8 at $M_q=0$. As flagged in Section \ref{sec:ricca_methodology} and revisited in Section \ref{sec:sim_framework}, this constant is one of the report's open items: calibrated to the paper's larger pole pitch, it is documented to underestimate leakage by roughly 4--6$\times$ at this project's tighter 10-pole/12-slot geometry, and is the most likely single cause of the flux-linkage shortfall traced throughout Part A.
-
-The specific flux actually reaching the pole shoe (eq. 39), and the resulting flux density averaged over the shoe's angular span $\alpha_m\tau_r$ (eq. 40), follow as:
-\begin{equation}
-    \label{eq:phi_go}
-    \phi_{go} = \phi_{PM}\left(1-\ell_{no\text{-}load}\right)\alpha_m = 11.98\times(1-0.166)\times0.80 \approx 7.996\,\text{mWb/m}
-\end{equation}
-\begin{equation}
-    \label{eq:b_go}
-    B_{go} = \frac{\phi_{go}}{\alpha_m\tau_r} = \frac{7.996\times10^{-3}}{0.80\times15.76\times10^{-3}} \approx 0.634\,\text{T}
-\end{equation}
-where $\tau_r=15.76\,\text{mm}$ is the rotor pole pitch (Section \ref{sec:rotor_geometry}). $B_{go}$ is the (roughly rectangular) flux density averaged over the pole-shoe arc; its fundamental Fourier component -- the quantity every later stage actually uses -- follows the standard width-$\alpha_m\pi$ square-wave factor (eq. 41):
-\begin{equation}
-    \label{eq:bg1o}
-    B_{g,1o} = \frac{4}{\pi}\sin\!\left(\alpha_m\frac{\pi}{2}\right)B_{go} = \frac{4}{\pi}\sin(72^\circ)\times0.634 \approx 0.768\,\text{T}
-\end{equation}
-and, converting back to a specific flux for use alongside $\phi_{go}$ elsewhere in the procedure (eq. 42):
-\begin{equation}
-    \label{eq:phi_g1o}
-    \phi_{g1o} = \frac{2}{\pi}B_{g,1o}\,\tau_r \approx 7.71\,\text{mWb/m}
-\end{equation}
-$B_{g,1o}=0.768\,\text{T}$ (\texttt{IPMRotorSizer.Bg1o\_T}) is the value quoted throughout the rest of Part A: the specific-torque equation (Eq.~\ref{eq:specific_torque}), the optimal phase advance search (Section \ref{sec:saturation_phase_advance}), and, downstream of the PM flux linkage $\Psi_{PM1}$, the corner-speed check of Section \ref{sec:corner_speed}.
+where $B_{gI}$ is the peak air-gap flux density driven by the q-axis reaction MMF, $B_t$ the tooth flux density it induces, $\rho_{bt,s}$ the tooth-to-slot-pitch ratio, $\rho_{hte,g}$ the tooth-height-to-air-gap ratio, $\mu_0$ the permeability of free space, and $H_{fe}(\cdot)$ the BH-curve interpolant of Fig.~\ref{fig:bh_curve}. $B_t$ shows up on both sides here; once linearly, once inside the nonlinear $H_{fe}(\cdot)$ interpolant built from the BH curve (Fig.~\ref{fig:bh_curve}), so there's no closed-form solution. \texttt{computeSaturationModel\_} instead root-finds it (\texttt{fzero}) on a grid of $B_{gI}$ values and caches the result as a pchip interpolant $B_t(B_{gI})$, so the rest of the solve just looks it up instead of re-solving Eq.~\ref{eq:tooth_flux_implicit} on every call. This sets the saturation ratio 
+$$\rho_{sat}(B_{gI})=1+H_{fe}(B_t)\,\rho_{hte,g}/(B_{gI}/\mu_0/k_C)$$ and the peak MMF needed to drive it.
+$$M_I(B_{gI})=B_{gI}\,g\,k_C\,\rho_{sat}/\mu_0$$
+Inverting $M_I(B_{gI})$ for a given q-axis MMF $M_q$ gives $\sigma_{sM}(M_q)=B_p(M_q)\,g\,k_C/(\mu_0 M_q)$, plotted in Fig.~\ref{fig:saturation_factor}. The geometric ratios feeding this, $\rho_{bt,s}=b_{ts}/\tau_s$ and $\rho_{hte,g}=h_{te}/g$ (eqs. 86, 91), can't be pinned down here: $b_{ts}$ (tooth width) and $h_{te}$ (tooth height) are only sized in Stage 4, from the stator winding/core geometry -- but Stage 4 sizes them \emph{from} $B_{g,1o}$ (eq. 85: $b_{ts}=(B_{g,1o}/B_{ts})\tau_s/k_{st}$), which is itself an output of this saturation model. \texttt{solve()} breaks that circularity by treating $\rho_{bt,s}$ and $\rho_{hte,g}$ as 2 of its 4 iterative parameters (alongside $c_d$ and $\sigma_{an}$, Section~\ref{sec:torque_sizing_reaction_coefficients}): seeded at the paper's own Table~I values ($\rho_{bt,s}=0.704$, $\rho_{hte,g}=52.4$), re-derived by Stage 4 at the end of every outer-loop pass, and fed back into Stage 2 on the next -- repeating until all four stop moving (\texttt{solve()} converges in 2 passes for this design). At this design's converged point they settle at $\rho_{bt,s}\approx0.560$ and $\rho_{hte,g}\approx32.0$. Stage 2 itself only needs $\sigma_{sM}$ at $M_q=0$, where it is unsaturated by definition ($\sigma_{sM}\to1$) -- which is why the no-load flux above was derived independently, straight from the PM's own magnetic circuit, rather than by evaluating this function at zero.
 
 \subsubsection*{Rotor Bridge Sizing and Structural Integrity}
 \label{sec:bridge_sizing}
@@ -469,7 +472,7 @@ The stress on the inner bridge is then evaluated against the lamination yield st
 \begin{equation}
     \sigma_{ib} = K_t \cdot \frac{f_{max}}{w_{ib} \cdot k_{st}} \leq \sigma_{y,lam}
 \end{equation}
-At the converged design point (\texttt{rotorSizer.summary()}, eqs. 19--22), this gives $f_{max}\approx12{,}168\,\text{N/m}$ and $\sigma_{ib}\approx8.33\,\text{MPa}$ -- only 1.8\% of $\sigma_{y,lam}$, i.e. comfortably safe (\texttt{IPMRotorSizer.BridgeSafe}\,=\,true) with the current $w_{ib}=2.5\,\text{mm}$ inner bridge (\texttt{Wib\_mm}, class default).
+At the converged design point (\texttt{rotorSizer.summary()}), this gives $f_{max}\approx12{,}168\,\text{N/m}$ and $\sigma_{ib}\approx8.33\,\text{MPa}$ -- only 1.8\% of $\sigma_{y,lam}$, i.e. comfortably safe (\texttt{IPMRotorSizer.BridgeSafe}\,=\,true) with the current $w_{ib}=2.5\,\text{mm}$ inner bridge.
 
 \begin{figure}[H]
 \centering
@@ -526,7 +529,7 @@ and the unsaturated anisotropy ratio used directly in Eq.~\ref{eq:ricca_torque_p
 \sigma_{an} = \sigma_{an,o} = \frac{c_q}{c_d} = \frac{0.951}{0.322} \approx 2.95 \quad\text{(eq. 110)}
 \end{equation}
 
-These closed forms were checked against the paper's own worked example (\texttt{test\_IPMRotorSizer.m}, evaluated at its Table I geometry: $\alpha_m=0.754$, $D=160\,\text{mm}$, 8 poles) and reproduce its reference values $c_d=0.201$, $c_q=0.825$, $\sigma_{an,o}=4.11$ to within 2\%. This project's own values differ substantially -- $c_d=0.322$ vs.\ $0.201$, $\sigma_{an}=2.95$ vs.\ $4.11$ -- mainly because the wider pole shoe chosen here ($\alpha_m=0.80$ vs.\ $0.754$) and the much smaller bore push $\theta_{e,rib}$ closer to $\theta_{ps}$ (a $2.4^\circ$ rib slice out of a $90^\circ$ quarter-pole here, versus a proportionally larger one in the paper's own design), shrinking the ``blocked'' rib share relative to the isotropic tail and letting more of the reaction MVD reach the air gap directly -- particularly on the d-axis, where the internally-absorbed $U_{psd}$ term is the main thing keeping $c_d$ low.
+%This project's own values differ substantially -- $c_d=0.322$ vs.\ $0.201$, $\sigma_{an}=2.95$ vs.\ $4.11$ -- mainly because the wider pole shoe chosen here ($\alpha_m=0.80$ vs.\ $0.754$) and the much smaller bore push $\theta_{e,rib}$ closer to $\theta_{ps}$ (a $2.4^\circ$ rib slice out of a $90^\circ$ quarter-pole here, versus a proportionally larger one in the paper's own design), shrinking the ``blocked'' rib share relative to the isotropic tail and letting more of the reaction MVD reach the air gap directly -- particularly on the d-axis, where the internally-absorbed $U_{psd}$ term is the main thing keeping $c_d$ low.
 
 With $c_d$, $\sigma_{an}$, and $\lambda_{is}$ fixed by geometry alone, that is everything Eq.~\ref{eq:ricca_torque_pu} needs from the reaction side; combining them with Stage 2's saturation factors ($\eta_\phi$, $\sigma_s$) to actually maximize $f_T$ over $\gamma$ and size the stack length is carried out next, in Section~\ref{sec:saturation_phase_advance}. One subtlety worth flagging: because \texttt{computeTorqueSizing\_} (which evaluates $\gamma_{opt}$) runs \emph{before} \texttt{computeElectricalParameters\_} within a given pass of \texttt{solve()}, the $c_d$/$\sigma_{an}$ values it actually uses are the \emph{previous} iteration's converged result -- seeded from the paper's own Table I defaults ($c_d=0.201$, $\sigma_{an,o}=4.11$) on the very first pass -- which is itself part of why the five-stage loop needs more than one iteration to begin with (Section~\ref{sec:ricca_methodology}); for this design point, \texttt{IPMRotorSizer.solve()} converges in 2 iterations.
 
@@ -583,7 +586,7 @@ U_{c,th} = \frac{\rho_{EV}V_{invM}}{k_w E_{cc}} = 154.6, \qquad u = 2\,\text{rou
 (eqs. 69, 72, 73). $U_c$ feeds Stage 5's inductances directly. Sizing the wire gauge from the current-density target $J_{s,rms}=8\,\text{A/mm}^2$, then the slot area from the copper fill factor $k_{Cu}=0.40$ (eqs. 76--84), fixes the tooth width and stator yoke height against the flux-density targets $B_{ts}=1.415\,\text{T}$, $B_{cs}=1.00\,\text{T}$:
 \begin{equation}
 \label{eq:tooth_yoke}
-b_{ts} = \frac{B_{g,1o}}{B_{ts}}\frac{\tau_s}{k_{st}} = 7.64\,\text{mm} \quad\text{(eq. 85)}, \qquad h_{sy} = \frac{\phi_{g1o}}{2B_{cs}k_{st}} = 3.97\,\text{mm} \quad\text{(eq. 93)}
+b_{ts} = \frac{B_{g,1o}}{B_{ts}}\frac{\tau_s}{k_{st}} = 7.64\,\text{mm} \quad\text{(eq. 85)}, \qquad h_{sy} = \frac{\phi_{g1o}}{2B_{cs}k_{st}} = 3.97\,\text{mm} % \quad\text{(eq. 93)}
 \end{equation}
 using $\tau_s=13.65\,\text{mm}$ (Section~\ref{sec:vshape_definition}). Adding the resulting slot height ($h=22.9\,\text{mm}$, the closed-form root of a trapezoidal slot-area equation, eq. 89) and the slot-opening height $h_{as}=1.5\,\text{mm}$ (class default) to the bore gives the external stator diameter:
 \begin{equation}
@@ -705,7 +708,7 @@ Phase current (peak) & \texttt{Ipk} & 74.2 A & Table~\ref{tab:params_calculated}
 \bottomrule
 \end{tabular}
 \end{table}
-\textbf{Not currently pushed:} magnet height $t_m$, V-angle $\alpha_v$, magnet width $w_m$, and outer bridge thickness $w_{ob}$ have no corresponding \texttt{pushGeometry} input -- the rotor part's magnet/bridge dimensions in the \texttt{.mph} template stay at whatever was last set by hand in COMSOL Desktop, not synced from \texttt{rotorSizer}. This is the same class of gap as the shaft-diameter one fixed above, still open for these four.
+% \textbf{Not currently pushed:} magnet height $t_m$, V-angle $\alpha_v$, magnet width $w_m$, and outer bridge thickness $w_{ob}$ have no corresponding \texttt{pushGeometry} input -- the rotor part's magnet/bridge dimensions in the \texttt{.mph} template stay at whatever was last set by hand in COMSOL Desktop, not synced from \texttt{rotorSizer}. This is the same class of gap as the shaft-diameter one fixed above, still open for these four.
 
 
 \section{Part B: Finite Element Analysis and Validation}
