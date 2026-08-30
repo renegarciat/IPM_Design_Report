@@ -251,7 +251,7 @@ $\beta_t$ is the fraction of a stator slot pitch a tooth must occupy to carry th
 &K_{s,rms,max} - \frac{k_{Cu}J_{s,rms}}{4}\left(aD_{is}-2bD_{os}+\frac{D_{os}^2}{D_{is}}\right) \geq 0
 \end{aligned}
 \end{equation}
-where $a=(\beta_t+\beta_c)^2-(1-\beta_t)^2$ and $b=\beta_t+\beta_c$. Solving this constrained optimization for $D_{is}$ (the unconstrained maximizer of $f_o$ if it already satisfies the constraint, otherwise the constraint-boundary solution) feeds the corresponding $D^3L$ output equation; the Formula-2 analogue of Esson's rule (Eq.~\ref{eq:essons_rule}):
+where $a=(\beta_t+\beta_c)^2-(1-\beta_t)^2$ and $b=\beta_t+\beta_c$. Solving this constrained optimization for $D_{is}$ (the unconstrained maximizer of $f_o$ if it already satisfies the constraint, otherwise the constraint-boundary solution) feeds the corresponding $D^3L$ output equation; the Formula-2 analogue of Esson's rule (Eq.~\ref{eq:essons_rule}) is:
 \begin{equation}
 \label{eq:essons_rule_d3l}
 \begin{split}
@@ -271,14 +271,8 @@ This procedure needs more design targets than Formula 1's single $\sigma_m$; we 
 \\\textbf{Max. RMS linear current density ($K_{s,rms,max}$):} 90 kA/m, the cooling-headroom limit, within range for liquid-cooled machines (150 - 200 kA/m) \cite{LucaLecture6}.
 \\\textbf{RMS current density ($J_{s,rms}$):} 8 A/mm$^2$. Within the the 7--10 A/mm$^2$ range presented in \cite{LucaLecture6}.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=0.9\textwidth]{figures/d3l_output_function.png}
-\caption{Left: output function $f_o(\rho)$ at our design's flux-density targets, dot marking the optimum. Right: cross-section schematic at that optimal ratio.}
-\label{fig:d3l_output_function}
-\end{figure*}
-
-Solving Eq.~\ref{eq:essons_rule_d3l} for $l_e$ at these targets (\texttt{EssonsSizer.solveD3L} gives $D_{is}=32.8\,\text{mm}$ and $l_e=123.5\,\text{mm}$. The result \textbf{exceeds the requirement table's 110\,mm stack limit} (\tablename~\ref{tab:propulsion_motor_requirements}), and we are not even accounting for the winding heads ($\approx$33\,mm) or a cooling-jacket allowance. The sensitivity check (\texttt{plot\_D3L\_current\_density\_sensitivity.m}) shows that raising $J_{s,rms}$ from $8\,\text{A/mm}^2$ to $\approx$$12\,\text{A/mm}^2$ brings $l_e$ down to 85.2\,mm  ($D_{is}\approx39.5\,\text{mm}$). Note that this means that the new motor needs to handle a considerable higher current density than the industry standard.
+Solving Eq.~\ref{eq:essons_rule_d3l} for $l_e$ at these targets (\texttt{EssonsSizer.solveD3L} gives $D_{is}=32.8\,\text{mm}$ and $l_e=123.5\,\text{mm}$. The result \textbf{exceeds the requirement table's 110\,mm stack limit} (\tablename~\ref{tab:propulsion_motor_requirements}), and we are not even accounting for the winding heads ($\approx$33\,mm). The sensitivity check (\texttt{plot\_D3L\_current\_density\_sensitivity.m}) shows that raising $J_{s,rms}$ from $8\,\text{A/mm}^2$ to $\approx$$12\,\text{A/mm}^2$ brings $l_e$ down to 85.2\,mm  ($D_{is}\approx39.5\,\text{mm}$). We can see this in the sensitivity plot (Figure~\ref{fig:d3l_current_density_sensitivity}), and a summary of the two solutions is shown in Table~\ref{tab:formula1_vs_formula2}. From here on, \textbf{we will consdier the 12 A/mm$^2$} case. Note that this means that the new motor needs to handle a considerable higher current density than the industry standard.
+Figure~\ref{fig:d3l_output_function} shows the output function $f_o(\rho)$ at $J_{s,rms} = 12\,\text{A/mm}^2$.
 
 \begin{figure*}[!t]
 \centering
@@ -286,9 +280,6 @@ Solving Eq.~\ref{eq:essons_rule_d3l} for $l_e$ at these targets (\texttt{EssonsS
 \caption{Sensitivity of the Formula 2 to the current density $J_{s}$. Raising it to $\approx$12\,A/mm$^2$ brings $l_e$ down to our 85.2\,mm target.}
 \label{fig:d3l_current_density_sensitivity}
 \end{figure*}
-
-Formula 2's bore (32.8\,mm) comes out noticeably smaller than Formula 1's 52.15\,mm. The two land on different rotor shapes as a result: Formula 1's $\lambda=2.0$ choice gives a fairly squat $l_e/D_{is}=0.628$, while Formula 2 independently derives a much longer, thinner $l_e/D_{is}\approx3.8$.
-
 \begin{table*}[!t]
 \centering
 \caption{Formula 1 vs. Formula 2 dimensions.}
@@ -304,9 +295,19 @@ $l_e/D_{is}$ & 0.628 & 3.8 & 2.16 \\
 \end{tabular}
 \end{table*}
 
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/d3l_output_function.png}
+\caption{Left: Optimum dimeter ratio optimum. Right: cross-section actual dimensions at optimal ratio.}
+\label{fig:d3l_output_function}
+\end{figure*}
+Formula 2's bore (32.8\,mm) comes out noticeably smaller than Formula 1's 52.15\,mm. The two land on different rotor shapes as a result: Formula 1's $\lambda=2.0$ choice gives a fairly squat $l_e/D_{is}=0.628$, while Formula 2 independently derives a much longer, thinner $l_e/D_{is}\approx3.8$.
+% TODO: Force a page break here.
+
+
 \subsubsection{Magnet Material Selection}
 \label{sec:magnet_material}
-The choice of permanent magnet material sets the remanent flux density $B_r$ that feeds every downstream calculation, from Formula 1's magnetic shear stress $\sigma_m$ to the flux-linkage target below and Ricca's saturation model (\sectionname~\ref{sec:ricca_methodology}) -- so it needs to be pinned down before those. We select \textbf{sintered NdFeB, grade N48} \cite{ACHMagnetsN48}: NdFeB gives the highest energy product of common magnet families, which this application needs for torque density within the fixed 95.9\,mm/110\,mm envelope, and N48 sits at a good remanence/cost balance -- higher grades (N52, N54) push $B_r$ only marginally higher at a steeper cost and availability penalty for a first design iteration.
+The choice of permanent magnet material sets the remanent flux density $B_r$ that feeds calculations like Formula 1's magnetic shear stress $\sigma_m$, the flux-linkage target below and Ricca's saturation model (\sectionname~\ref{sec:ricca_methodology}). We select \textbf{sintered NdFeB, grade N48} \cite{ACHMagnetsN48}: NdFeB gives the highest energy product of common magnet families, which this application needs for torque density, and N48 sits at a good remanence/cost balance. Higher grades (N52, N54) push $B_r$ only marginally higher at a steeper cost and availability penalty for a first design iteration.
 \\\textbf{Remanence at 20\textdegree{}C ($B_{r,20}$):} \textbf{1.37 T}, from the datasheet \cite{ACHMagnetsN48} -- in line with N48's typical 1.37--1.42\,T remanence range, and the value used throughout this project's sizing pipeline.
 \\\textbf{PM operating temperature ($T_{PM}$):} \textbf{140\textdegree{}C}, set by the existing 4\,l/min liquid cooling loop's expected margin above ambient plus $I^2R$/core losses reaching the rotor. Standard N48 (no suffix) is typically only rated to $\approx$80--100\textdegree{}C before accelerated, irreversible demagnetization risk; sustaining 140\textdegree{}C safely calls for a high-temperature-stable variant (N48SH or better, rated $\gtrsim$150\textdegree{}C) -- to be confirmed against the specific part ordered, an open item for the next design iteration.
 \\\textbf{Temperature-corrected remanence ($B_r$):} using a typical reversible temperature coefficient $\alpha_{Br}=-0.10\,\%/\text{\textdegree{}C}$,

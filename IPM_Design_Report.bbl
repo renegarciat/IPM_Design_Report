@@ -7,8 +7,7 @@
 \providecommand{\BIBentrySTDinterwordspacing}{\spaceskip=0pt\relax}
 \providecommand{\BIBentryALTinterwordstretchfactor}{4}
 \providecommand{\BIBentryALTinterwordspacing}{\spaceskip=\fontdimen2\font plus
-\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
-  \fontdimen4\font\relax}
+\BIBentryALTinterwordstretchfactor\fontdimen3\font minus \fontdimen4\font\relax}
 \providecommand{\BIBforeignlanguage}[2]{{%
 \expandafter\ifx\csname l@#1\endcsname\relax
 \typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
@@ -25,45 +24,30 @@
 {AMK}, ``{Motor Datasheet: DD5-14-10-POW (A2370DD)},'' Nov. 27 2018.
 
 \bibitem{DrawingDD5}
-{Arnold M\"uller GmbH \& Co. KG (AMK)}, ``Mechanical drawing: Dd5-14-pow-19000,
-  formula student (a2370, drawing no.\ 12703-01260),'' Oct. 29 2014, rev.\ 4,
-  2015-03-30.
+{Arnold M\"uller GmbH \& Co. KG (AMK)}, ``Mechanical drawing: Dd5-14-pow-19000, formula student (a2370, drawing no.\ 12703-01260),'' Oct. 29 2014, rev.\ 4, 2015-03-30.
 
 \bibitem{LeiXu2019}
-L.~Xu, ``Indirect analytical modeling and analysis of v-shaped pm synchronous
-  machine,'' \emph{IEEE Access}, vol.~7, pp. 174\,571--174\,579, 2019.
+L.~Xu, ``Indirect analytical modeling and analysis of v-shaped pm synchronous machine,'' \emph{IEEE Access}, vol.~7, pp. 174\,571--174\,579, 2019.
 
 \bibitem{Lipo2017}
-T.~A. Lipo, \emph{Introduction to AC Machine Design}.\hskip 1em plus 0.5em
-  minus 0.4em\relax IEEE Press / Wiley, 2017.
+T.~A. Lipo, \emph{Introduction to AC Machine Design}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE Press / Wiley, 2017.
 
 \bibitem{ZhuHowe2000}
-Z.~Q. Zhu and D.~Howe, ``Influence of design parameters on cogging torque in
-  permanent magnet machines,'' \emph{IEEE Transactions on Energy Conversion},
-  vol.~15, no.~4, pp. 407--412, 2000.
+Z.~Q. Zhu and D.~Howe, ``Influence of design parameters on cogging torque in permanent magnet machines,'' \emph{IEEE Transactions on Energy Conversion}, vol.~15, no.~4, pp. 407--412, 2000.
 
 \bibitem{ElRefaie2010}
-A.~M. El-Refaie, ``Fractional-slot concentrated-windings synchronous permanent
-  magnet machines: Opportunities and challenges,'' \emph{IEEE Transactions on
-  Industrial Electronics}, vol.~57, no.~1, pp. 107--121, 2010.
+A.~M. El-Refaie, ``Fractional-slot concentrated-windings synchronous permanent magnet machines: Opportunities and challenges,'' \emph{IEEE Transactions on Industrial Electronics}, vol.~57, no.~1, pp. 107--121, 2010.
 
 \bibitem{Metwly2021}
-M.~Y. Metwly, A.~Hemeida, A.~S. Abdel-Khalik, M.~S. Hamad, and S.~Ahmed,
-  ``Design and multi-objective optimization of a 12-slot/10-pole integrated obc
-  using magnetic equivalent circuit approach,'' \emph{Machines}, vol.~9,
-  no.~12, p. 329, 2021.
+M.~Y. Metwly, A.~Hemeida, A.~S. Abdel-Khalik, M.~S. Hamad, and S.~Ahmed, ``Design and multi-objective optimization of a 12-slot/10-pole integrated obc using magnetic equivalent circuit approach,'' \emph{Machines}, vol.~9, no.~12, p. 329, 2021.
 
 \bibitem{LucaLecture6}
-L.~Peretti, ``Lecture 6 - design process of rotating electrical machines,''
-  2026, eJ2223 course material, KTH Royal Institute of Technology.
+L.~Peretti, ``Lecture 6 - design process of rotating electrical machines,'' 2026, eJ2223 course material, KTH Royal Institute of Technology.
 
 \bibitem{DiGerlandoRicca2022}
-A.~Di~Gerlando and C.~Ricca, ``Design modeling and sizing equations of v-shape
-  {IPM} motors,'' in \emph{2022 International Conference on Electrical Machines
-  (ICEM)}, 2022.
+A.~Di~Gerlando and C.~Ricca, ``Design modeling and sizing equations of v-shape {IPM} motors,'' in \emph{2022 International Conference on Electrical Machines (ICEM)}, 2022.
 
 \bibitem{ACHMagnetsN48}
-{ACH Magnets, Inc.}, ``N48 sintered neodymium magnet datasheet,''
-  \url{https://datasheets.globalspec.com/ds/ach-magnets/n48/5779689f-9ede-4f4b-b358-155fbaa0cfb0}.
+{ACH Magnets, Inc.}, ``N48 sintered neodymium magnet datasheet,'' \url{https://datasheets.globalspec.com/ds/ach-magnets/n48/5779689f-9ede-4f4b-b358-155fbaa0cfb0}.
 
 \end{thebibliography}
