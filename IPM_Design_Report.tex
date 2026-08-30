@@ -104,6 +104,8 @@ Moreover, each motor is connected to a fixed gearbox with a 14:1 ratio, which wi
 The inverter used to drive this motor is the \textbf{KW26-S5-FSE-4Q}. This inverter consists of 4 independent channels.
 Notice how the inverter is a bottleneck in this configuration, since the 1200 Hz limit gives a 14,400 rpm for a 10-pole machine. This means that the motor enters field-weakening mode only on the last 10\% range of operation. Here we state the first deviation; \tablename~\ref{tab:propulsion_motor_requirements} states that the Maximum Speed should be 20,000 rpm, but the existing inverter caps the maximum speed at 14,400 rpm. Replacing the inverter is kept out of scope for study.
 
+Throughout this report the DC-link voltage is taken as $V_{DC}=515\,\text{V}$, the assumed nominal for the car's tractive-system bus. AMK documents the DD5 itself at $U_{ZK}=500\,\text{V}$ and $600\,\text{V}$ DC (\figurename~\ref{fig:power_and_torque_current_motor_mod} reads the $500\,\text{V}$ curve); every $V_{DC}$-dependent result in Part A (corner speed, \sectionname~\ref{sec:corner_speed}; winding turns, \sectionname~\ref{sec:stator_winding_sizing}; the current-limit check, \sectionname~\ref{sec:part_b_fea}) derives from this single value.
+
 The following table summarizes the previously analyzed motor/inverter parameters.
 
 \begin{table}[!t]
@@ -115,7 +117,7 @@ The following table summarizes the previously analyzed motor/inverter parameters
 \textit{Parameter} & \textit{Symbol} & \textit{Value}\\ \hline
 \textbf{Pole Number} & $P$ & 10 \\
 \textbf{Slot Number} & $N_s$ & 12 \\
-\textbf{Line Voltage} & $V_{line}$ & 540 V\\
+\textbf{DC-link Voltage} & $V_{DC}$ & 515 V\\
 \textbf{Nominal Power} & $P_{n}$ & 12.3 kW \\
 \textbf{Peak Power} & $P_{max}$ & 28 kW \\
 \textbf{Nominal Torque} & $M_{n}$ & 9.8 Nm \\
@@ -717,7 +719,7 @@ The following table summarizes the first design objectives (\tablename~\ref{tab:
 \textbf{Slot Number} & $N_s$ & 12 & Low cogging torque when combined with the 10 poles. \\
 \textbf{Stack Length} & $l_e$ & 46.6 mm & Ricca's converged torque-sizing result (eq.~\ref{eq:stack_length}, \sectionname~\ref{sec:saturation_phase_advance}). \\
 \textbf{Stator Outer Diameter} & $D_{es}$ & 108.8 mm & From Stage 4 (\sectionname~\ref{sec:stator_winding_sizing}), eq.~94. Not $D_{os}$; that symbol is reserved for the \emph{old} motor's 89.9\,mm stator OD (\tablename~\ref{tab:current_motor_data}). \\
-\textbf{Line Voltage} & $V_{line}$ & 515 V & It is within the nominal range of the inverter. \\
+\textbf{DC-link Voltage} & $V_{DC}$ & 515 V & Assumed tractive-system bus voltage (\sectionname~\ref{sec:Inverter}); within the AMK inverter's 500--600 V DC documented range. Same value as \tablename~\ref{tab:current_motor_data}: it is the one inverter, reused. \\
 \textbf{Target Nominal Power} & $P_{nom}$ & $\approx$12.6 kW & $P_{nom}=T_{nom}\cdot\omega_{base}=9.8\,\text{Nm}\times1281.8\,\text{rad/s}$ at the corner speed. \\
 \textbf{Target Peak Power} & $P_{peak}$ & 26 kW & Sized to maximize the inverter capacity (26 kVA/channel, the inverter's own \texttt{KW26} model designation). Not reconciled with Part B's current-limit check (\sectionname~\ref{sec:part_b_fea}), which instead uses the boundary requirement's 28\,kW directly (\tablename~\ref{tab:propulsion_motor_requirements}). \\
 \textbf{Magnet Material} & $B_r$ & N48 NdFeB: 1.37 T (20\textdegree{}C) / 1.21 T (140\textdegree{}C) & Selected in Magnet Material Selection (\sectionname~\ref{sec:magnet_material}) for its remanence/cost balance; the temperature-corrected value is what Ricca's saturation model (\sectionname~\ref{sec:ricca_methodology}) actually uses. \\
