@@ -28,10 +28,10 @@
 \title{Formula E Interior Permanent Magnet Motor Design\\
 {\large Improvement of the Formula Student Team Car's Performance}}
 
-\author{\IEEEauthorblockN{Rene Orlando Garcia Torres\IEEEauthorrefmark{1}, Qirui Zhang\IEEEauthorrefmark{1}}
+\author{\IEEEauthorblockN{Rene Orlando Garcia Torres\IEEEauthorrefmark{1}}
 
 \IEEEauthorblockA{\IEEEauthorrefmark{1}Kungliga Tekniska h\"ogskolan (KTH), Stockholm, Sweden\\
-E-mail: reneogt@kth.se, zhangq@kth.se}
+E-mail: reneogt@kth.se}
 }
 
 \begin{document}
@@ -452,7 +452,7 @@ Stage 2 (\texttt{IPMRotorSizer.computeSaturationModel\_}) turns the Stage 1 geom
     \label{eq:phi_pm}
     \phi_{PM} = B_r \cdot 2w_m = 1.206\times2\times4.97\times10^{-3} \approx 11.98\,\text{mWb/m}
 \end{equation}
-using the temperature-derated $B_r=1.206\,\text{T}$ (Eq.~\ref{eq:br_derating}) and the magnet width $w_m=4.97\,\text{mm}$ from Stage 1 (Eq.~\ref{eq:wm}). Part of this leaks locally through the inner/outer bridges instead of crossing the air gap; \texttt{IPMRotorSizer} models both bridges combined with a single constant leakage fraction, $\ell_{no\text{-}load}=16.6\%$ (\texttt{leakage\_no\_load}). As flagged in \sectionname~\ref{sec:ricca_methodology} and revisited in \sectionname~\ref{sec:sim_framework}, this constant is one of the report's open items: calibrated to the paper's larger pole pitch, it is documented to underestimate leakage by roughly 4--6$\times$ at this project's tighter 10-pole/12-slot geometry, and is the most likely single cause of the flux-linkage shortfall traced throughout \sectionname~\ref{sec:corner_speed}.
+using the temperature-derated $B_r=1.206\,\text{T}$ (Eq.~\ref{eq:br_derating}) and the magnet width $w_m=4.97\,\text{mm}$ from Stage 1 (Eq.~\ref{eq:wm}). Part of this leaks locally through the inner/outer bridges instead of crossing the air gap; \texttt{IPMRotorSizer} models both bridges combined with a single constant leakage fraction, $\ell_{no\text{-}load}=16.6\%$ (\texttt{leakage\_no\_load}). This constant is copied from Ricca's paper, which is calibrated to a larger pole pitch, at this project's tighter 10-pole/12-slot geometry, is most likely the cause of the flux-linkage shortfall traced throughout \sectionname~\ref{sec:corner_speed}.
 
 The specific flux actually reaching the pole shoe, and the resulting flux density averaged over the shoe's angular span $\alpha_m\tau_r$, follow as:
 \begin{equation}
@@ -797,10 +797,11 @@ Phase current (peak) & \texttt{Ipk} & 74.2 A & \tablename~\ref{tab:params_calcul
 \bottomrule
 \end{tabular}
 \end{table*}
+% TODO: Add page break.
 
 \section{Part B: Finite Element Analysis and Validation}
 \label{sec:part_b_fea}
-To validate the Part A results, a simulation loop has been established using a MATLAB interface (LiveLink for MATLAB, over Python, since the entire analytical sizing chain in \sectionname~\ref{sec:ricca_methodology} is already MATLAB, avoiding a second language boundary between sizing and simulation). The objective is to verify the results and make necessary adjustments to the design parameters, taking the simulation results as more accurate than the analytical model.
+To validate the Part A results, a simulation loop has been established using a MATLAB interface. The objective is to verify the results and make necessary adjustments to the design parameters, taking the simulation results as more accurate than the analytical model.
 
 \subsection{Electromechanical Power Modeling}
 Since the motor is not 100\% efficient, we represent the electrical input power ($P_{elec}$) relative to the mechanical shaft power ($P_{mech}$) through the overall efficiency ($\eta$).
